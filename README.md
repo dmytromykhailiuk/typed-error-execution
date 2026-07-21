@@ -1,5 +1,7 @@
 # typed-error-execution
 
+> **Full documentation:** open [Docs](https://dmytromykhailiuk.github.io/typed-error-execution/)
+
 **Errors that live in the type system.**
 
 A `Result<T, E>` either succeeded with a `T` or failed with one of the tagged errors in `E`. Errors are ordinary classes carrying a literal `_tag`, so TypeScript tracks exactly which failures a call can still produce — and `handleError()` removes them from that union one at a time until nothing is left.
