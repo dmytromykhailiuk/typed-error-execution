@@ -1,0 +1,1728 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>typed-error-execution — documentation</title>
+    <meta
+      name="description"
+      content="Typed, tagged errors for TypeScript. A Result type that tracks every failure in its signature. Complete API reference."
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%235B4BD6'/%3E%3Cpath d='M7 22V14a3 3 0 0 1 3-3h9' stroke='%23fff' stroke-width='2.6' fill='none' stroke-linecap='round'/%3E%3Cpath d='M16 8l4 3-4 3' stroke='%23fff' stroke-width='2.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M12 20l3 3 6-7' stroke='%23fff' stroke-width='2.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"
+    />
+    <style>
+      /* ── tokens ──────────────────────────────────────────────────────── */
+      :root {
+        --ground: #fbfbfd;
+        --surface: #ffffff;
+        --surface-2: #f3f4f8;
+        --code-bg: #f7f7fb;
+        --ink: #14161c;
+        --ink-2: #3a3f4c;
+        --muted: #6b7181;
+        --line: #e3e5ec;
+        --line-2: #edeff4;
+        --accent: #5b4bd6;
+        --accent-2: #4436b8;
+        --accent-soft: #efecfd;
+        --wire: #0e7c7b;
+        --warn: #8a5200;
+        --warn-soft: #fcf3e5;
+        --warn-line: #e8cda0;
+        --danger: #b42318;
+        --danger-soft: #fdf1f0;
+        --danger-line: #f0c8c4;
+        --tok-str: #0e7c7b;
+        --tok-kw: #7a3ea8;
+        --tok-com: #8a90a0;
+        --tok-num: #a34a00;
+        --tok-key: #2b5fcf;
+        --shadow: 0 1px 2px rgba(20, 22, 28, 0.05),
+          0 8px 24px -12px rgba(20, 22, 28, 0.14);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --ground: #0e1014;
+          --surface: #14171d;
+          --surface-2: #191d25;
+          --code-bg: #12151b;
+          --ink: #e9ebf1;
+          --ink-2: #c3c9d6;
+          --muted: #8b93a6;
+          --line: #262b35;
+          --line-2: #1e222b;
+          --accent: #a99bff;
+          --accent-2: #c3b8ff;
+          --accent-soft: #1e1b33;
+          --wire: #4fd1c5;
+          --warn: #e2a85c;
+          --warn-soft: #241c10;
+          --warn-line: #4a3a1e;
+          --danger: #ff9086;
+          --danger-soft: #251413;
+          --danger-line: #4c2622;
+          --tok-str: #5fd3c6;
+          --tok-kw: #c79bf0;
+          --tok-com: #6e7688;
+          --tok-num: #e0a162;
+          --tok-key: #8ab4ff;
+          --shadow: 0 1px 2px rgba(0, 0, 0, 0.4),
+            0 8px 24px -12px rgba(0, 0, 0, 0.6);
+        }
+      }
+      :root[data-theme="dark"] {
+        --ground: #0e1014;
+        --surface: #14171d;
+        --surface-2: #191d25;
+        --code-bg: #12151b;
+        --ink: #e9ebf1;
+        --ink-2: #c3c9d6;
+        --muted: #8b93a6;
+        --line: #262b35;
+        --line-2: #1e222b;
+        --accent: #a99bff;
+        --accent-2: #c3b8ff;
+        --accent-soft: #1e1b33;
+        --wire: #4fd1c5;
+        --warn: #e2a85c;
+        --warn-soft: #241c10;
+        --warn-line: #4a3a1e;
+        --danger: #ff9086;
+        --danger-soft: #251413;
+        --danger-line: #4c2622;
+        --tok-str: #5fd3c6;
+        --tok-kw: #c79bf0;
+        --tok-com: #6e7688;
+        --tok-num: #e0a162;
+        --tok-key: #8ab4ff;
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.4),
+          0 8px 24px -12px rgba(0, 0, 0, 0.6);
+      }
+      :root[data-theme="light"] {
+        --ground: #fbfbfd;
+        --surface: #ffffff;
+        --surface-2: #f3f4f8;
+        --code-bg: #f7f7fb;
+        --ink: #14161c;
+        --ink-2: #3a3f4c;
+        --muted: #6b7181;
+        --line: #e3e5ec;
+        --line-2: #edeff4;
+        --accent: #5b4bd6;
+        --accent-2: #4436b8;
+        --accent-soft: #efecfd;
+        --wire: #0e7c7b;
+        --warn: #8a5200;
+        --warn-soft: #fcf3e5;
+        --warn-line: #e8cda0;
+        --danger: #b42318;
+        --danger-soft: #fdf1f0;
+        --danger-line: #f0c8c4;
+        --tok-str: #0e7c7b;
+        --tok-kw: #7a3ea8;
+        --tok-com: #8a90a0;
+        --tok-num: #a34a00;
+        --tok-key: #2b5fcf;
+        --shadow: 0 1px 2px rgba(20, 22, 28, 0.05),
+          0 8px 24px -12px rgba(20, 22, 28, 0.14);
+      }
+
+      /* ── base ────────────────────────────────────────────────────────── */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      html {
+        -webkit-text-size-adjust: 100%;
+        scroll-behavior: smooth;
+        scroll-padding-top: 1.5rem;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+      body {
+        margin: 0;
+        background: var(--ground);
+        color: var(--ink);
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        font-size: 16px;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* ── shell ───────────────────────────────────────────────────────── */
+      .shell {
+        display: grid;
+        grid-template-columns: 17rem minmax(0, 1fr);
+        gap: 3.5rem;
+        max-width: 78rem;
+        margin: 0 auto;
+        padding: 0 1.75rem;
+      }
+      @media (max-width: 62rem) {
+        .shell {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 0;
+        }
+      }
+
+      /* ── sidebar ─────────────────────────────────────────────────────── */
+      .rail {
+        position: sticky;
+        top: 0;
+        align-self: start;
+        max-height: 100vh;
+        overflow-y: auto;
+        padding: 2.25rem 0 3rem;
+      }
+      @media (max-width: 62rem) {
+        .rail {
+          position: static;
+          max-height: none;
+          overflow: visible;
+          padding-bottom: 0;
+        }
+      }
+      .brand {
+        display: flex;
+        align-items: baseline;
+        gap: 0.5rem;
+        margin-bottom: 0.35rem;
+      }
+      .brand-mark {
+        font: 600 0.95rem/1 ui-monospace, SFMono-Regular, Menlo, Consolas,
+          monospace;
+        color: var(--accent);
+        letter-spacing: -0.01em;
+      }
+      .brand-ver {
+        font: 500 0.7rem/1 ui-monospace, SFMono-Regular, Menlo, Consolas,
+          monospace;
+        color: var(--muted);
+        padding: 0.15rem 0.35rem;
+        border: 1px solid var(--line);
+        border-radius: 0.3rem;
+      }
+      .brand-sub {
+        margin: 0 0 1.5rem;
+        font-size: 0.82rem;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+      .toc-title {
+        font: 600 0.68rem/1 ui-monospace, SFMono-Regular, Menlo, Consolas,
+          monospace;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--muted);
+        margin: 0 0 0.7rem;
+      }
+      nav.toc ol {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.05rem;
+      }
+      nav.toc > ol > li > a {
+        font-weight: 550;
+      }
+      nav.toc a {
+        display: block;
+        padding: 0.27rem 0.6rem;
+        border-left: 2px solid var(--line-2);
+        color: var(--ink-2);
+        text-decoration: none;
+        font-size: 0.855rem;
+        line-height: 1.35;
+        transition: color 0.12s, border-color 0.12s, background 0.12s;
+      }
+      nav.toc a:hover {
+        color: var(--accent);
+        background: var(--accent-soft);
+        border-left-color: var(--accent);
+      }
+      nav.toc a.is-active {
+        color: var(--accent);
+        border-left-color: var(--accent);
+        font-weight: 600;
+      }
+      nav.toc a:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: -2px;
+        border-radius: 0.2rem;
+      }
+      nav.toc ol ol a {
+        padding-left: 1.35rem;
+        font-size: 0.81rem;
+        color: var(--muted);
+      }
+      /* theme toggle: fixed at the top of the screen, icon only */
+      .theme-toggle {
+        position: fixed;
+        top: 0.9rem;
+        right: 0.9rem;
+        z-index: 20;
+        display: grid;
+        place-items: center;
+        width: 2.35rem;
+        height: 2.35rem;
+        padding: 0;
+        color: var(--ink-2);
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 50%;
+        box-shadow: var(--shadow);
+        cursor: pointer;
+        transition: color 0.12s, border-color 0.12s, background 0.12s;
+      }
+      .theme-toggle:hover {
+        color: var(--accent);
+        border-color: var(--accent);
+        background: var(--accent-soft);
+      }
+      .theme-toggle:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      .theme-toggle .icon {
+        width: 1.15rem;
+        height: 1.15rem;
+        /* both icons share one grid cell, so swapping never shifts anything */
+        grid-area: 1 / 1;
+      }
+
+      /* Which icon shows is derived from the same signals that drive the
+         palette, so it stays correct with or without an explicit override. */
+      .icon-sun {
+        display: none;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme]) .icon-moon {
+          display: none;
+        }
+        :root:not([data-theme]) .icon-sun {
+          display: block;
+        }
+      }
+      :root[data-theme="dark"] .icon-moon {
+        display: none;
+      }
+      :root[data-theme="dark"] .icon-sun {
+        display: block;
+      }
+      :root[data-theme="light"] .icon-moon {
+        display: block;
+      }
+      :root[data-theme="light"] .icon-sun {
+        display: none;
+      }
+
+      /* keep the toggle clear of the sidebar on narrow screens */
+      @media (max-width: 62rem) {
+        .rail {
+          padding-right: 3rem;
+        }
+      }
+
+      /* mobile TOC: a plain container on desktop, a collapsible panel below 62rem */
+      @media (max-width: 62rem) {
+        .toc-shell {
+          border: 1px solid var(--line);
+          border-radius: 0.6rem;
+          background: var(--surface);
+          padding: 0.35rem 0.8rem;
+          margin-bottom: 1.5rem;
+        }
+        .toc-shell > summary {
+          cursor: pointer;
+          font: 600 0.8rem/2.2 system-ui, sans-serif;
+          color: var(--ink-2);
+        }
+        .toc-shell[open] > summary {
+          border-bottom: 1px solid var(--line-2);
+          margin-bottom: 0.5rem;
+        }
+        .toc-shell > summary::marker {
+          color: var(--accent);
+        }
+        .toc-shell .toc-title {
+          display: none;
+        } /* the summary already says "Contents" */
+      }
+      @media (min-width: 62.001rem) {
+        .toc-shell > summary {
+          display: none;
+        }
+      }
+
+      /* ── content ─────────────────────────────────────────────────────── */
+      main {
+        padding: 2.25rem 0 6rem;
+        min-width: 0;
+      }
+      .lede {
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 2.25rem;
+        margin-bottom: 2.5rem;
+      }
+      h1 {
+        font-family: ui-serif, Georgia, "Iowan Old Style", "Palatino Linotype",
+          Palatino, serif;
+        font-size: clamp(2.1rem, 1.4rem + 2.6vw, 3.1rem);
+        line-height: 1.06;
+        letter-spacing: -0.022em;
+        font-weight: 600;
+        margin: 0 0 0.7rem;
+        text-wrap: balance;
+      }
+      .lede p {
+        font-size: 1.08rem;
+        color: var(--ink-2);
+        margin: 0 0 1rem;
+        max-width: 62ch;
+      }
+      .lede p:last-child {
+        margin-bottom: 0;
+      }
+      .pitch {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        margin-top: 1.25rem;
+      }
+      .pitch span {
+        font: 500 0.74rem/1 ui-monospace, SFMono-Regular, Menlo, Consolas,
+          monospace;
+        color: var(--wire);
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 2rem;
+        padding: 0.38rem 0.7rem;
+      }
+
+      section {
+        scroll-margin-top: 1.5rem;
+        padding-top: 2.75rem;
+      }
+      section + section {
+        border-top: 1px solid var(--line-2);
+      }
+      h2 {
+        font-family: ui-serif, Georgia, "Iowan Old Style", Palatino, serif;
+        font-size: 1.85rem;
+        line-height: 1.15;
+        letter-spacing: -0.017em;
+        font-weight: 600;
+        margin: 0 0 0.35rem;
+        text-wrap: balance;
+      }
+      h3 {
+        font-size: 1.12rem;
+        font-weight: 650;
+        letter-spacing: -0.006em;
+        margin: 2.25rem 0 0.6rem;
+        text-wrap: balance;
+      }
+      h4 {
+        font: 600 0.72rem/1 ui-monospace, SFMono-Regular, Menlo, Consolas,
+          monospace;
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+        color: var(--muted);
+        margin: 1.75rem 0 0.55rem;
+      }
+      .eyebrow {
+        font: 600 0.68rem/1 ui-monospace, SFMono-Regular, Menlo, Consolas,
+          monospace;
+        text-transform: uppercase;
+        letter-spacing: 0.11em;
+        color: var(--accent);
+        margin: 0 0 0.55rem;
+      }
+      p {
+        margin: 0 0 1rem;
+        max-width: 68ch;
+      }
+      li > p {
+        margin-bottom: 0.4rem;
+      }
+      a {
+        color: var(--accent);
+        text-underline-offset: 0.17em;
+        text-decoration-thickness: 0.06em;
+      }
+      a:hover {
+        color: var(--accent-2);
+      }
+      a:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+        border-radius: 0.15rem;
+      }
+      ul,
+      ol {
+        margin: 0 0 1rem;
+        padding-left: 1.25rem;
+        max-width: 68ch;
+      }
+      li {
+        margin-bottom: 0.35rem;
+      }
+      li::marker {
+        color: var(--muted);
+      }
+      strong {
+        font-weight: 640;
+      }
+      hr {
+        border: 0;
+        border-top: 1px solid var(--line-2);
+        margin: 2rem 0;
+      }
+
+      /* inline code */
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas,
+          "Liberation Mono", monospace;
+        font-size: 0.875em;
+      }
+      p > code,
+      li > code,
+      td > code,
+      th > code,
+      h3 > code,
+      h2 > code,
+      summary > code,
+      dt > code {
+        background: var(--surface-2);
+        border: 1px solid var(--line-2);
+        border-radius: 0.3rem;
+        padding: 0.08em 0.34em;
+        color: var(--ink);
+        white-space: nowrap;
+      }
+
+      /* code blocks */
+      .snippet {
+        margin: 0 0 1.25rem;
+        border: 1px solid var(--line);
+        border-radius: 0.6rem;
+        background: var(--code-bg);
+        overflow: hidden;
+        box-shadow: var(--shadow);
+      }
+      .snippet-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.45rem 0.8rem;
+        border-bottom: 1px solid var(--line-2);
+        background: var(--surface);
+      }
+      .snippet-lang {
+        font: 600 0.66rem/1 ui-monospace, SFMono-Regular, Menlo, Consolas,
+          monospace;
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+        color: var(--muted);
+      }
+      .snippet-note {
+        font: 500 0.72rem/1.3 system-ui, sans-serif;
+        color: var(--muted);
+        text-align: right;
+      }
+      .snippet pre {
+        margin: 0;
+        padding: 0.95rem 1rem;
+        overflow-x: auto;
+        font-size: 0.845rem;
+        line-height: 1.62;
+      }
+      .snippet code {
+        color: var(--ink);
+        white-space: pre;
+      }
+      .tok-str {
+        color: var(--tok-str);
+      }
+      .tok-kw {
+        color: var(--tok-kw);
+      }
+      .tok-com {
+        color: var(--tok-com);
+        font-style: italic;
+      }
+      .tok-num {
+        color: var(--tok-num);
+      }
+      .tok-key {
+        color: var(--tok-key);
+      }
+
+      /* callouts */
+      .note {
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--accent);
+        background: var(--surface);
+        border-radius: 0.5rem;
+        padding: 0.9rem 1.1rem;
+        margin: 0 0 1.25rem;
+      }
+      .note > :last-child {
+        margin-bottom: 0;
+      }
+      .note-label {
+        font: 600 0.68rem/1 ui-monospace, SFMono-Regular, Menlo, Consolas,
+          monospace;
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+        color: var(--accent);
+        display: block;
+        margin-bottom: 0.4rem;
+      }
+      .note.warn {
+        border-left-color: var(--warn);
+        background: var(--warn-soft);
+        border-color: var(--warn-line);
+      }
+      .note.warn .note-label {
+        color: var(--warn);
+      }
+      .note.danger {
+        border-left-color: var(--danger);
+        background: var(--danger-soft);
+        border-color: var(--danger-line);
+      }
+      .note.danger .note-label {
+        color: var(--danger);
+      }
+
+      /* tables */
+      .table-wrap {
+        overflow-x: auto;
+        margin: 0 0 1.25rem;
+        border: 1px solid var(--line);
+        border-radius: 0.6rem;
+        background: var(--surface);
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 0.875rem;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 0.6rem 0.85rem;
+        border-bottom: 1px solid var(--line-2);
+        vertical-align: top;
+      }
+      thead th {
+        font: 600 0.68rem/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas,
+          monospace;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: var(--muted);
+        background: var(--surface-2);
+        white-space: nowrap;
+      }
+      tbody tr:last-child td {
+        border-bottom: 0;
+      }
+      td code {
+        white-space: nowrap;
+      }
+      td:first-child {
+        white-space: nowrap;
+      }
+
+      /* definition rows for option reference */
+      .opts {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        border: 1px solid var(--line);
+        border-radius: 0.6rem;
+        overflow: hidden;
+        margin: 0 0 1.25rem;
+        background: var(--surface);
+      }
+      .opt {
+        display: grid;
+        grid-template-columns: 13rem minmax(0, 1fr);
+        gap: 1.25rem;
+        padding: 0.8rem 1rem;
+        border-bottom: 1px solid var(--line-2);
+      }
+      .opt:last-child {
+        border-bottom: 0;
+      }
+      @media (max-width: 46rem) {
+        .opt {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 0.25rem;
+        }
+      }
+      .opt-name {
+        font: 600 0.82rem/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas,
+          monospace;
+        color: var(--accent);
+        word-break: break-word;
+      }
+      .opt-type {
+        display: block;
+        font: 400 0.74rem/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas,
+          monospace;
+        color: var(--muted);
+        margin-top: 0.15rem;
+        white-space: normal;
+      }
+      .opt-body {
+        font-size: 0.9rem;
+        color: var(--ink-2);
+      }
+      .opt-body > :last-child {
+        margin-bottom: 0;
+      }
+      .opt-body p {
+        margin-bottom: 0.5rem;
+        max-width: none;
+      }
+
+      .anchor {
+        color: var(--muted);
+        text-decoration: none;
+        opacity: 0;
+        margin-left: 0.4rem;
+        font-weight: 400;
+      }
+      h2:hover .anchor,
+      h3:hover .anchor,
+      .anchor:focus-visible {
+        opacity: 1;
+      }
+
+      footer {
+        border-top: 1px solid var(--line);
+        margin-top: 4rem;
+        padding-top: 1.5rem;
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+    </style>
+  </head>
+  <body>
+    <button class="theme-toggle" type="button" id="theme-toggle" aria-label="Switch theme">
+      <svg class="icon icon-moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path
+          d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linejoin="round"
+        />
+      </svg>
+      <svg class="icon icon-sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="1.8" />
+        <g stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <path d="M12 2.6v2.2M12 19.2v2.2M4.2 12H2M22 12h-2.2" />
+          <path d="M5.9 5.9 4.4 4.4M19.6 19.6l-1.5-1.5M18.1 5.9l1.5-1.5M4.4 19.6l1.5-1.5" />
+        </g>
+      </svg>
+    </button>
+
+    <div class="shell">
+      <div class="rail">
+        <div class="brand">
+          <span class="brand-mark">typed-error-execution</span>
+          <span class="brand-ver">1.0.0</span>
+        </div>
+        <p class="brand-sub">
+          Typed, tagged errors for TypeScript. Zero dependencies.
+        </p>
+
+        <details class="toc-shell" open>
+          <summary>Contents</summary>
+          <p class="toc-title">Contents</p>
+          <nav class="toc" aria-label="Table of contents">
+            <ol>
+              <li><a href="#install">Install</a></li>
+              <li>
+                <a href="#why">The idea</a>
+                <ol>
+                  <li><a href="#why-not">What it is not</a></li>
+                </ol>
+              </li>
+              <li><a href="#quick-start">Quick start</a></li>
+              <li>
+                <a href="#errors">Defining errors</a>
+                <ol>
+                  <li><a href="#native-errors">Native errors</a></li>
+                </ol>
+              </li>
+              <li>
+                <a href="#results">Creating results</a>
+                <ol>
+                  <li><a href="#literal-tag">The literal-tag rule</a></li>
+                </ol>
+              </li>
+              <li>
+                <a href="#dispatch">One method, sync or async</a>
+                <ol>
+                  <li><a href="#short-circuit">Skipped steps</a></li>
+                </ol>
+              </li>
+              <li><a href="#register">Registering executions</a></li>
+              <li>
+                <a href="#transform">Transforming</a>
+                <ol>
+                  <li><a href="#map-value">mapValue</a></li>
+                  <li><a href="#map-error">mapError</a></li>
+                  <li><a href="#tap">tap</a></li>
+                </ol>
+              </li>
+              <li>
+                <a href="#handling">Handling errors</a>
+                <ol>
+                  <li><a href="#handling-rules">Three rules</a></li>
+                </ol>
+              </li>
+              <li>
+                <a href="#async">Asynchronous chains</a>
+                <ol>
+                  <li><a href="#awaiting">Finishing a chain</a></li>
+                  <li><a href="#forcing-async">toAsync</a></li>
+                </ol>
+              </li>
+              <li>
+                <a href="#combining">Combining results</a>
+                <ol>
+                  <li><a href="#collect">collect</a></li>
+                </ol>
+              </li>
+              <li>
+                <a href="#terminals">Getting the value out</a>
+                <ol>
+                  <li><a href="#match">match</a></li>
+                  <li><a href="#unwrap">unwrap</a></li>
+                  <li><a href="#value-error">value &amp; error</a></li>
+                </ol>
+              </li>
+              <li><a href="#throwing">Bridging throws</a></li>
+              <li>
+                <a href="#recipes">Recipes</a>
+                <ol>
+                  <li><a href="#recipe-http">HTTP handler</a></li>
+                  <li><a href="#recipe-exhaustive">Exhaustiveness</a></li>
+                  <li><a href="#recipe-fallback">Fallback chain</a></li>
+                  <li><a href="#recipe-retry">Retry</a></li>
+                  <li><a href="#recipe-layers">Layers</a></li>
+                </ol>
+              </li>
+              <li>
+                <a href="#typescript">TypeScript notes</a>
+                <ol>
+                  <li><a href="#inference-rules">How the union moves</a></li>
+                  <li><a href="#naming-async">Naming an async chain</a></li>
+                </ol>
+              </li>
+              <li>
+                <a href="#api">API reference</a>
+                <ol>
+                  <li><a href="#api-result-static">Result statics</a></li>
+                  <li><a href="#api-result-instance">Result instance</a></li>
+                  <li><a href="#api-errors">Error helpers</a></li>
+                </ol>
+              </li>
+              <li><a href="#comparison">How it compares</a></li>
+              <li><a href="#exports">Exports</a></li>
+            </ol>
+          </nav>
+        </details>
+
+      </div>
+
+      <main>
+        <header class="lede">
+          <h1>typed-error-execution</h1>
+          <p>
+            Errors that live in the type system. A
+            <code>Result&lt;T, E&gt;</code> either succeeded with a
+            <code>T</code> or failed with one of the tagged errors in
+            <code>E</code>.
+          </p>
+          <p>
+            Errors are ordinary classes carrying a literal <code>_tag</code>, so
+            TypeScript tracks exactly which failures a call can still produce —
+            and <code>handleError()</code> removes them from that union
+            <strong>one at a time</strong> until nothing is left. When the union
+            reaches <code>never</code>, the compiler knows the value is safe.
+          </p>
+          <p>
+            Inspired by <a href="https://effect.website/">Effect</a> and
+            <a href="https://github.com/supermacro/neverthrow">neverthrow</a>,
+            but deliberately small: one type, one error convention, no
+            generators, no runtime, no fibers.
+          </p>
+          <div class="pitch">
+            <span>zero dependencies</span>
+            <span>subtractive error handling</span>
+            <span>four exports</span>
+            <span>one API, sync and async</span>
+            <span>no runtime</span>
+            <span>100% test coverage</span>
+          </div>
+        </header>
+
+        <!-- ──────────────────────────────────────────────────────────── -->
+        <section id="install">
+<p class="eyebrow">Getting started</p>
+<h2>Install<a class="anchor" href="#install" aria-label="Link to Install">#</a></h2><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">sh</span></div>
+  <pre><code data-lang="sh">npm i @dmytromykhailiuk/typed-error-execution</code></pre>
+</div><p>No peer dependencies, no runtime to configure, nothing to register at startup. ESM and CJS builds ship side by side with separate declaration files.</p><div class="note"><span class="note-label">Note</span><p><strong>TypeScript 5.0 or newer.</strong> The library leans hard on inference, and <code>all()</code> uses <code>const</code> type parameters, which landed in 5.0. Everything else works further back, but 5.0 is the supported floor.</p></div>
+        </section>
+        <!-- ──────────────────────────────────────────────────────────── -->
+        <section id="why">
+<p class="eyebrow">Motivation</p>
+<h2>The idea<a class="anchor" href="#why" aria-label="Link to The idea">#</a></h2><p>Here is a signature from a real service. It tells you nothing about the five ways it can fail, and nothing breaks when a sixth is added:</p><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span></div>
+  <pre><code data-lang="ts">async function registerUser(input: SignUpInput): Promise&lt;User&gt;;</code></pre>
+</div><p>Somewhere inside it there is a uniqueness check, a password policy, a database write and a call to a payment provider. Each can fail. The caller finds out by reading the implementation — or in production.</p><p>This library moves failure into the return type, where the compiler can see it:</p><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span></div>
+  <pre><code data-lang="ts">function registerUser(
+  input: SignUpInput,
+): AsyncResult&lt;User, ValidationFailed | EmailAlreadyRegistered | DatabaseUnavailable&gt;;</code></pre>
+</div><p>Three properties follow, and they are the whole point.</p><div class="opts"><div class="opt"><div class="opt-name">You cannot forget a failure<span class="opt-type">the union is in the signature</span></div><div class="opt-body"><p>Adding a plan check to <code>registerUser</code> shows up as a type change at every call site. There is no equivalent of a <code>throw</code> that quietly travels four frames up and lands in a framework error handler as a 500.</p></div></div><div class="opt"><div class="opt-name">Handling is subtraction<span class="opt-type">handleError removes what it handles</span></div><div class="opt-body"><p>Every <code>handleError()</code> call removes exactly the classes you named from the union. When your HTTP layer has mapped the last one, the union is <code>never</code> and the compiler knows the response is total — you did not assert that, you proved it.</p></div></div><div class="opt"><div class="opt-name">Nothing is magic<span class="opt-type">classes, instanceof, two fields</span></div><div class="opt-body"><p>Failures are ordinary <code>class</code> instances. Matching is <code>instanceof</code>. A <code>Result</code> is an object with a boolean and two slots. The whole implementation reads in one sitting, which matters when it sits between you and every request your service serves.</p></div></div></div><h3 id="why-not">What it deliberately is not<a class="anchor" href="#why-not" aria-label="Link to What it deliberately is not">#</a></h3><p>No effect system, no dependency injection, no generator syntax, no retry or scheduling combinators, no runtime. If you want those, <a href='https://effect.website/'>Effect</a> is excellent and this is not trying to replace it — this is the layer underneath: typed errors, and nothing else.</p><div class="note"><span class="note-label">Note</span><p>The design is borrowed openly. The <code>Result</code> shape comes from <a href='https://github.com/supermacro/neverthrow'>neverthrow</a>, the tagged-error convention from Effect. The contribution here is <em>subtractive</em> <code>handleError</code>: handling failures by class and watching the union shrink to <code>never</code>.</p></div>
+        </section>
+        <!-- ──────────────────────────────────────────────────────────── -->
+        <section id="quick-start">
+<h2>Quick start<a class="anchor" href="#quick-start" aria-label="Link to Quick start">#</a></h2><p>A sign-up flow, end to end: declare the failures, register the function, chain it, then map what is left onto an HTTP response.</p><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span><span class="snippet-note">The switch is exhaustive — add a third failure and it stops compiling</span></div>
+  <pre><code data-lang="ts">import { Result, Tagged, TaggedError } from "@dmytromykhailiuk/typed-error-execution";
+
+// 1. Failures are classes with a literal tag, carrying the data the caller
+//    needs to render a message or make a decision.
+class ValidationFailed extends Tagged("ValidationFailed") {
+  constructor(
+    readonly field: string,
+    readonly reason: string,
+  ) {
+    super();
+  }
+}
+class EmailAlreadyRegistered extends Tagged("EmailAlreadyRegistered") {
+  constructor(readonly email: string) {
+    super();
+  }
+}
+// An infrastructure failure extends the native Error, so it has a stack and
+// logs usefully. A domain failure does not need one.
+class DatabaseUnavailable extends TaggedError("DatabaseUnavailable") {}
+
+// 2. registerExecution freezes the error union into the signature.
+const registerUser = Result.registerExecution(async (input: SignUpInput) =&gt; {
+  if (input.password.length &lt; 12) {
+    return Result.err(new ValidationFailed("password", "must be at least 12 characters"));
+  }
+
+  const existing = await db.users.findByEmail(input.email);
+  if (existing) return Result.err(new EmailAlreadyRegistered(input.email));
+
+  return Result.ok(await db.users.insert(input));
+});
+// (input: SignUpInput) =&gt; AsyncResult&lt;User, ValidationFailed | EmailAlreadyRegistered&gt;
+
+// 3. Chain, then map the union onto a response.
+app.post("/signup", async (req, res) =&gt; {
+  const settled = await registerUser(req.body)
+    .tap((user) =&gt; analytics.track("signup", { userId: user.id }))
+    .getResult(); // a chain resolves to a Result; the terminals live there
+
+  const response = settled.match({
+      ok: (user) =&gt; ({ status: 201, body: publicProfile(user) }),
+      err: (e) =&gt; {
+        switch (e._tag) {
+          case "ValidationFailed":
+            return { status: 422, body: { field: e.field, reason: e.reason } };
+          case "EmailAlreadyRegistered":
+            return { status: 409, body: { error: "that email is already in use" } };
+      }
+    },
+  });
+
+  res.status(response.status).json(response.body);
+});</code></pre>
+</div><p>The synchronous half looks the same, minus the <code>await</code>. Nothing about the API changes between the two:</p><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span></div>
+  <pre><code data-lang="ts">const parsePlan = Result.registerExecution((raw: string) =&gt; {
+  if (raw === "free" || raw === "pro") return Result.ok(raw);
+  return Result.err(new ValidationFailed("plan", `unknown plan: ${raw}`));
+});
+// (raw: string) =&gt; Result&lt;"free" | "pro", ValidationFailed&gt;
+
+const plan = parsePlan(req.query.plan).unwrapOr("free"); // no await, no promise</code></pre>
+</div>
+        </section>
+        <!-- ──────────────────────────────────────────────────────────── -->
+        <section id="errors">
+<p class="eyebrow">Core concepts</p>
+<h2>Declaring failures<a class="anchor" href="#errors" aria-label="Link to Declaring failures">#</a></h2><p>A failure is a class extending <code>Tagged(tag)</code>. The tag is a <strong>string literal</strong>, and that literal is what makes the union in <code>Result&lt;T, E&gt;</code> meaningful.</p><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span></div>
+  <pre><code data-lang="ts">import { Tagged } from "@dmytromykhailiuk/typed-error-execution";
+
+class UserNotFound extends Tagged("UserNotFound") {
+  constructor(readonly userId: string) {
+    super();
+  }
+}
+
+class SubscriptionRequired extends Tagged("SubscriptionRequired") {
+  constructor(
+    readonly currentPlan: string,
+    readonly requiredPlan: string,
+  ) {
+    super();
+  }
+}
+
+class RateLimited extends Tagged("RateLimited") {
+  constructor(readonly retryAfterSeconds: number) {
+    super();
+  }
+}</code></pre>
+</div><p>Carry whatever the caller will need. <code>RateLimited.retryAfterSeconds</code> becomes a <code>Retry-After</code> header; <code>SubscriptionRequired.requiredPlan</code> becomes the upgrade button. That data stays fully typed inside a handler at the far end of the chain, which is the difference between a useful failure and a log line.</p><h3 id="native-errors">Tagged vs TaggedError<a class="anchor" href="#native-errors" aria-label="Link to Tagged vs TaggedError">#</a></h3><p>Two factories, and the choice comes down to whether anyone will ever read a stack trace for this failure.</p><div class="table-wrap"><table><thead><tr><th></th><th><code>Tagged</code></th><th><code>TaggedError</code></th></tr></thead><tbody><tr><td>Extends <code>Error</code></td><td>no</td><td>yes</td></tr><tr><td><code>message</code> / <code>stack</code></td><td>no</td><td>yes</td></tr><tr><td>Construction cost</td><td>a plain object</td><td>captures a stack trace</td></tr><tr><td>Reach for it when</td><td>the failure is an expected outcome</td><td>the failure means something is broken</td></tr><tr><td>Typical example</td><td><code>UserNotFound</code>, <code>RateLimited</code></td><td><code>DatabaseUnavailable</code>, <code>PaymentGatewayError</code></td></tr></tbody></table></div><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span></div>
+  <pre><code data-lang="ts">import { TaggedError } from "@dmytromykhailiuk/typed-error-execution";
+
+class DatabaseUnavailable extends TaggedError("DatabaseUnavailable") {}
+class PaymentGatewayError extends TaggedError("PaymentGatewayError") {}
+
+const err = new DatabaseUnavailable("connection pool exhausted after 5000ms");
+err._tag;             // "DatabaseUnavailable"
+err.name;             // "DatabaseUnavailable"
+err.message;          // "connection pool exhausted after 5000ms"
+err.stack;            // a real stack trace
+err instanceof Error; // true — Sentry, pino and friends handle it correctly
+
+logger.error({ err }, "query failed"); // serialises like any other Error</code></pre>
+</div><p>Capturing a stack trace is by far the most expensive part of creating an error. <em>This user does not exist</em> is not an exceptional event — it is a Tuesday — and paying for a stack on every 404 in a hot path is waste. A database that will not answer is a different matter: you want the trace, and you want it in your error reporter.</p><div class="note"><span class="note-label">Note</span><p><strong>Each call to <code>Tagged()</code> returns a distinct class.</strong> Two failures that happen to share a tag string are still separate under <code>instanceof</code>, so <code>handleError</code> will never confuse them.</p></div><div class="note warn"><span class="note-label">Careful</span><p><strong>Subclasses inherit the parent's tag.</strong> <code>class CardExpired extends PaymentDeclined {}</code> has <code>_tag === "PaymentDeclined"</code>. Since matching is <code>instanceof</code>, handling <code>PaymentDeclined</code> also handles <code>CardExpired</code> — usually what you want for a family of related failures. Give the subclass its own <code>Tagged("CardExpired")</code> base when the two must be told apart in a <code>switch</code>.</p></div>
+        </section>
+        <!-- ──────────────────────────────────────────────────────────── -->
+        <section id="results">
+<h2>Creating results<a class="anchor" href="#results" aria-label="Link to Creating results">#</a></h2><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span></div>
+  <pre><code data-lang="ts">Result.ok(user);                        // Result&lt;User, never&gt;
+Result.ok();                            // Result&lt;void, never&gt;  — a command succeeded
+Result.empty();                         // Result&lt;null, never&gt;  — nothing to return
+Result.err(new UserNotFound("u_8123")); // Result&lt;never, UserNotFound&gt;</code></pre>
+</div><p><code>ok()</code> and <code>empty()</code> differ in intent: <code>void</code> is the absence of a value — a <code>DELETE</code> that worked — while <code>null</code> is a value you can branch on, such as a cache lookup that legitimately found nothing.</p><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span></div>
+  <pre><code data-lang="ts">const revokeSession = Result.registerExecution(async (sessionId: string) =&gt; {
+  const removed = await db.sessions.delete(sessionId);
+  if (!removed) return Result.err(new SessionNotFound(sessionId));
+  return Result.ok(); // nothing to hand back, and that is the point
+});
+
+const cached = Result.registerExecution(async (key: string) =&gt; {
+  const hit = await redis.get(key);
+  return hit ? Result.ok(JSON.parse(hit)) : Result.empty(); // a real "no value"
+});</code></pre>
+</div><h3 id="literal-tag">The literal-tag rule<a class="anchor" href="#literal-tag" aria-label="Link to The literal-tag rule">#</a></h3><p><code>Result.err()</code> rejects a failure whose <code>_tag</code> has widened to <code>string</code>, because a widened tag silently collapses the union and switches error tracking off entirely:</p><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span><span class="snippet-note">A deliberately loud compile error, not a silent downgrade</span></div>
+  <pre><code data-lang="ts">class HandRolled {
+  readonly _tag: string = "HandRolled"; // ← widened, not a literal
+}
+
+Result.err(new HandRolled());
+// Argument of type 'HandRolled' is not assignable to parameter of type
+// '{ ERROR: "_tag must be a string literal — declare the class as
+//    `class X extends Tagged('X') {}`" }'</code></pre>
+</div><p>Extending <code>Tagged()</code> always produces a literal, so in practice you never meet this rule — it exists to catch a hand-rolled failure shape before it quietly breaks inference across a whole service.</p>
+        </section>
+        <!-- ──────────────────────────────────────────────────────────── -->
+        <section id="dispatch">
+<p class="eyebrow">The dispatch rule</p>
+<h2>One method, sync or async<a class="anchor" href="#dispatch" aria-label="Link to One method, sync or async">#</a></h2><p>There is no <code>mapValueAsync</code>, no <code>tryAsync</code>, no <code>registerAsyncExecution</code>. Every method takes a callback and looks at <strong>what the callback actually returned</strong>:</p><div class="opts"><div class="opt"><div class="opt-name">a Result<span class="opt-type">→ Result</span></div><div class="opt-body"><p>The chain stays synchronous. No promise is created, nothing to await, and the value is readable on the next line — what you want for parsing a request body or validating a form.</p></div></div><div class="opt"><div class="opt-name">a Promise, or an async chain<span class="opt-type">→ asynchronous chain</span></div><div class="opt-body"><p>The rest of the chain is asynchronous. Finish it with <code>getResult()</code> or a terminal. This is the shape of anything that touches a database, a queue or an HTTP API.</p></div></div></div><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span><span class="snippet-note">The check is instanceof — no heuristics on the function itself</span></div>
+  <pre><code data-lang="ts">// validating a request body: no I/O, so no promise anywhere
+const plan = parsePlan(req.body.plan).unwrapOr("free");
+
+// loading a user: I/O, so the chain is asynchronous from here on
+const profile = await loadUser(userId)
+  .mapValue((user) =&gt; Result.ok(publicProfile(user)))
+  .getResult();
+
+// It is about the value, not the keyword — anything promise-shaped counts.
+Result.ok(userId).mapValue((id) =&gt; db.users.findById(id)); // async
+Result.ok(userId).mapValue((id) =&gt; loadUser(id));          // async: loadUser is</code></pre>
+</div><p>The same rule governs every entry point:</p><div class="table-wrap"><table><thead><tr><th>Call</th><th>Synchronous when</th><th>Asynchronous when</th></tr></thead><tbody><tr><td><code>mapValue</code> · <code>mapError</code> · <code>handleError</code></td><td>the callback returns a result</td><td>it returns a promise or an async chain</td></tr><tr><td><code>tap</code> · <code>tapError</code></td><td>the effect returns nothing</td><td>the effect returns a promise (which is awaited)</td></tr><tr><td><code>Result.try</code></td><td>the body returns a value</td><td>the body returns a promise</td></tr><tr><td><code>Result.registerExecution</code></td><td>the body returns a result</td><td>the body is <code>async</code></td></tr><tr><td><code>Result.all</code> · <code>Result.collect</code></td><td>every member is synchronous</td><td>any member is asynchronous</td></tr></tbody></table></div><p>Types follow exactly the same rule, so the editor agrees with the runtime. A callback with one synchronous branch and one asynchronous branch counts as asynchronous — the safe reading.</p><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span></div>
+  <pre><code data-lang="ts">// a cache read that only hits the network on a miss
+const config = Result.ok(key).mapValue((k) =&gt;
+  memory.has(k) ? Result.ok(memory.get(k)!) : fetchConfig(k),
+);
+// asynchronous — because it might be</code></pre>
+</div><h3 id="short-circuit">Skipped steps<a class="anchor" href="#short-circuit" aria-label="Link to Skipped steps">#</a></h3><p>A chain short-circuits: <code>Result.err(e).mapValue(fn)</code> never calls <code>fn</code>. There is no returned value to inspect, so the step reads the callback itself — an <code>async</code> function is identifiable at runtime, and the chain becomes a real asynchronous one even though nothing ran.</p><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span><span class="snippet-note">Detection covers arrows, declarations, methods and bound functions</span></div>
+  <pre><code data-lang="ts">const chain = Result.err(new UserNotFound("u_1")).mapValue(async (u: User) =&gt;
+  Result.ok(await enrich(u)),
+);
+// an async chain, in the type and at runtime — enrich was never called
+
+// a synchronous callback keeps the step synchronous, so the value is right here
+Result.err(new UserNotFound("u_1")).mapValue((u: User) =&gt; Result.ok(u.email)).error;</code></pre>
+        </section>
+        <!-- ──────────────────────────────────────────────────────────── -->
+        <section id="register">
+<p class="eyebrow">The key trick</p>
+<h2>Registering executions<a class="anchor" href="#register" aria-label="Link to Registering executions">#</a></h2><p>Left alone, TypeScript infers a function with several <code>return</code> branches as a <strong>union of results</strong>:</p><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span><span class="snippet-note">Technically correct, practically unchainable</span></div>
+  <pre><code data-lang="ts">const chargeSubscription = async (userId: string, cents: number) =&gt; {
+  const user = await db.users.findById(userId);
+  if (!user) return Result.err(new UserNotFound(userId));
+  if (!user.paymentMethodId) return Result.err(new NoPaymentMethod(userId));
+
+  const charge = await stripe.charges.create({ amount: cents, customer: user.stripeId });
+  if (charge.status === "failed") return Result.err(new PaymentDeclined(charge.failureCode));
+
+  return Result.ok(charge);
+};
+// Promise&lt;Result&lt;never, UserNotFound&gt; | Result&lt;never, NoPaymentMethod&gt;
+//         | Result&lt;never, PaymentDeclined&gt; | Result&lt;Charge, never&gt;&gt;</code></pre>
+</div><p>That type is nearly impossible to work with: <code>mapValue</code> on a union of results has to typecheck against every member. <code>registerExecution</code> collapses it into one result whose error parameter is the union — which is what you meant all along:</p><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span><span class="snippet-note">A result of unions, instead of a union of results</span></div>
+  <pre><code data-lang="ts">const chargeSubscription = Result.registerExecution(
+  async (userId: string, cents: number) =&gt; {
+    const user = await db.users.findById(userId);
+    if (!user) return Result.err(new UserNotFound(userId));
+    if (!user.paymentMethodId) return Result.err(new NoPaymentMethod(userId));
+
+    const charge = await stripe.charges.create({ amount: cents, customer: user.stripeId });
+    if (charge.status === "failed") return Result.err(new PaymentDeclined(charge.failureCode));
+
+    return Result.ok(charge);
+  },
+);
+// (userId: string, cents: number)
+//   =&gt; AsyncResult&lt;Charge, UserNotFound | NoPaymentMethod | PaymentDeclined&gt;</code></pre>
+</div><p>A synchronous body needs no different call — it simply yields a <code>Result</code> instead of a chain:</p><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span></div>
+  <pre><code data-lang="ts">const parseWebhookEvent = Result.registerExecution((raw: unknown) =&gt; {
+  if (typeof raw !== "object" || raw === null) {
+    return Result.err(new MalformedWebhook("body is not an object"));
+  }
+  if (!("type" in raw)) return Result.err(new MalformedWebhook("missing 'type'"));
+  return Result.ok(raw as StripeEvent);
+});
+// (raw: unknown) =&gt; Result&lt;StripeEvent, MalformedWebhook&gt;</code></pre>
+</div><div class="note warn"><span class="note-label">Careful</span><p><strong>It does not catch exceptions.</strong> A <code>throw</code> inside the body still propagates, and an async body still rejects. That is deliberate: a throw is a bug, a failure is an outcome. Use <a href='#throwing'><code>Result.try</code></a> when you want to convert one into the other — which is exactly what you do at the edge of an SDK that throws.</p></div>
+        </section>
+        <!-- ──────────────────────────────────────────────────────────── -->
+        <section id="transform">
+<p class="eyebrow">Chaining</p>
+<h2>Transforming<a class="anchor" href="#transform" aria-label="Link to Transforming">#</a></h2><h3 id="map-value">mapValue — the workhorse<a class="anchor" href="#map-value" aria-label="Link to mapValue — the workhorse">#</a></h3><p>Runs on success, passes failures straight through. The callback returns a result, so it may introduce new failures — those are <strong>added</strong> to the union.</p><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span><span class="snippet-note">Each step can only add to the error union</span></div>
+  <pre><code data-lang="ts">loadUser(userId)                                  // AsyncResult&lt;User, UserNotFound&gt;
+  .mapValue((user) =&gt; requirePlan(user, "pro"))   // + SubscriptionRequired
+  .mapValue((user) =&gt; loadWorkspace(user.orgId))  // + WorkspaceArchived
+  .mapValue((ws) =&gt; Result.ok(serialise(ws)));    // no new failures
+// AsyncResult&lt;WorkspaceDTO,
+//   UserNotFound | SubscriptionRequired | WorkspaceArchived&gt;</code></pre>
+</div><p>A failure short-circuits everything after it. If the user does not exist, <code>requirePlan</code> and <code>loadWorkspace</code> never run — no wasted query, no null check.</p><h3 id="map-error">mapError<a class="anchor" href="#map-error" aria-label="Link to mapError">#</a></h3><p>Runs on failure, passes successes through. It sees the whole union at once, so the resulting error type is <strong>replaced</strong>, not narrowed. Useful at a boundary where the caller has no business knowing your internals:</p><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span></div>
+  <pre><code data-lang="ts">// a public SDK method: collapse everything into one documented failure
+const fetchInvoice = Result.registerExecution(async (id: string) =&gt;
+  loadInvoice(id)
+    .mapError((e) =&gt; {
+      logger.warn({ tag: e._tag }, "invoice lookup failed");
+      return Result.err(new InvoiceUnavailable(id));
+    })
+    .getResult(),
+);
+// AsyncResult&lt;Invoice, InvoiceUnavailable&gt;</code></pre>
+</div><p>To deal with specific failures and leave the rest alone, reach for <a href='#handling'><code>handleError</code></a> instead.</p><h3 id="tap">tap and tapError<a class="anchor" href="#tap" aria-label="Link to tap and tapError">#</a></h3><p>Side effects that do not touch the value — logging, metrics, audit trails. The callback's return value is ignored, but if it is a promise the chain turns asynchronous and <strong>waits for it</strong>.</p><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span></div>
+  <pre><code data-lang="ts">placeOrder(cart)
+  .tap((order) =&gt; metrics.increment("orders.placed", { plan: order.plan }))
+  .tapError((e) =&gt; logger.warn({ tag: e._tag, cartId: cart.id }, "checkout failed"))
+  .tap(async (order) =&gt; await audit.record("order.created", order.id)); // awaited</code></pre>
+</div><div class="note"><span class="note-label">Note</span><p><code>tapError</code> is where infrastructure failures earn their <code>TaggedError</code> base: <code>logger.warn({ err })</code> gets a real stack trace for a <code>DatabaseUnavailable</code>, and a compact object for a <code>UserNotFound</code> that never needed one.</p></div>
+        </section>
+        <!-- ──────────────────────────────────────────────────────────── -->
+        <section id="handling">
+<h2>Handling failures<a class="anchor" href="#handling" aria-label="Link to Handling failures">#</a></h2><p><code>handleError</code> takes one or more <strong>classes</strong> followed by a handler, and removes exactly those from the union.</p><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span><span class="snippet-note">Handling is subtraction — watch the union shrink to never</span></div>
+  <pre><code data-lang="ts">//  AsyncResult&lt;Dashboard, UserNotFound | SubscriptionRequired | DatabaseUnavailable&gt;
+const dashboard = loadDashboard(userId)
+  .handleError(UserNotFound, () =&gt; Result.ok(emptyDashboard))
+  //  AsyncResult&lt;Dashboard, SubscriptionRequired | DatabaseUnavailable&gt;
+  .handleError(SubscriptionRequired, (e) =&gt; Result.ok(upsellDashboard(e.requiredPlan)))
+  //  AsyncResult&lt;Dashboard, DatabaseUnavailable&gt;
+  .handleError(DatabaseUnavailable, () =&gt; Result.ok(staleDashboardFromCache(userId)));
+  //  AsyncResult&lt;Dashboard, never&gt;   ← nothing left to handle
+
+const view = (await dashboard.getResult()).unwrap(); // safe, and the compiler knows it</code></pre>
+</div><p>The handler's parameter is narrowed to the classes you listed, so the data the failure carries is right there:</p><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span></div>
+  <pre><code data-lang="ts">callExternalApi(request)
+  .handleError(RateLimited, async (e) =&gt; {
+    // e.retryAfterSeconds: number
+    await sleep(e.retryAfterSeconds * 1000);
+    return callExternalApi(request).getResult();
+  })
+  .handleError(PaymentDeclined, CardExpired, (e) =&gt; {
+    // e: PaymentDeclined | CardExpired
+    return Result.err(new CheckoutFailed(e._tag));
+  });</code></pre>
+</div><p>A handler may also convert one failure into another. The new one lands back in the union — this is how a layer re-tags what it cannot fix:</p><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span></div>
+  <pre><code data-lang="ts">loadRow(id).handleError(DatabaseUnavailable, (e) =&gt; Result.err(new ServiceDegraded(e)));
+// AsyncResult&lt;Row, RowNotFound | ServiceDegraded&gt;</code></pre>
+</div><h3 id="handling-rules">Three rules worth knowing<a class="anchor" href="#handling-rules" aria-label="Link to Three rules worth knowing">#</a></h3><div class="opts"><div class="opt"><div class="opt-name">Matching is instanceof<span class="opt-type">not tag comparison</span></div><div class="opt-body"><p>Handling a class also handles every subclass of it. One <code>handleError(PaymentDeclined, …)</code> covers <code>CardExpired</code>, <code>InsufficientFunds</code> and any other member of that family.</p></div></div><div class="opt"><div class="opt-name">A handler never sees its own output<span class="opt-type">no re-entry</span></div><div class="opt-body"><p>Converting <code>DatabaseUnavailable</code> into <code>ServiceDegraded</code> and handling <code>ServiceDegraded</code> later in the chain works exactly as written. There is no loop.</p></div></div><div class="opt"><div class="opt-name">The handler runs at most once<span class="opt-type">even with overlapping classes</span></div><div class="opt-body"><p>If you list both a class and its subclass and the instance matches both, the handler still runs a single time.</p></div></div></div><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span></div>
+  <pre><code data-lang="ts">// instanceof matching: a subclass is handled by its parent's entry
+class CardExpired extends PaymentDeclined {}
+
+Result.err(new CardExpired("exp_2019"))
+  .handleError(PaymentDeclined, () =&gt; Result.ok(retryWithBackupCard())); // ✓ handled
+
+// but not the other way around
+Result.err(new PaymentDeclined("do_not_honour"))
+  .handleError(CardExpired, () =&gt; Result.ok(promptForNewCard())); // ✗ passes through
+
+// no re-entry: the second handler never fires
+Result.err(new DatabaseUnavailable("timeout"))
+  .handleError(DatabaseUnavailable, (e) =&gt; Result.err(new ServiceDegraded(e)))
+  .handleError(DatabaseUnavailable, () =&gt; Result.ok(cached)); // unreachable</code></pre>
+</div>
+        </section>
+        <!-- ──────────────────────────────────────────────────────────── -->
+        <section id="async">
+<p class="eyebrow">Async</p>
+<h2>Asynchronous chains<a class="anchor" href="#async" aria-label="Link to Asynchronous chains">#</a></h2><p>An asynchronous chain has a deliberately small surface: the five chaining methods, plus <code>getResult()</code>. Nothing reads a value — there is nothing to read until the chain settles. See <a href='#dispatch'>the dispatch rule</a> for how a chain becomes asynchronous in the first place.</p><div class="table-wrap"><table><thead><tr><th>Member</th><th>on <code>Result</code></th><th>on an async chain</th></tr></thead><tbody><tr><td><code>mapValue</code> · <code>mapError</code> · <code>handleError</code> · <code>tap</code> · <code>tapError</code></td><td>yes</td><td>yes — identical signature</td></tr><tr><td><code>getResult()</code></td><td>yes</td><td>yes — identical signature</td></tr><tr><td><code>match()</code> · <code>unwrap()</code> · <code>unwrapError()</code> · <code>unwrapOr()</code> · <code>unwrapOrElse()</code></td><td>yes</td><td><strong>no</strong> — call <code>getResult()</code> first</td></tr><tr><td><code>value</code> · <code>error</code> · <code>isOk</code> · <code>isErr</code></td><td>yes</td><td><strong>no</strong> — nothing to read yet</td></tr><tr><td><code>toAsync()</code></td><td>yes</td><td><strong>no</strong> — already one</td></tr></tbody></table></div><div class="note"><span class="note-label">Note</span><p>Read the table as a <strong>subset</strong>: every member an asynchronous chain exposes also exists on <code>Result</code>, with the same signature. That is not a coincidence — it is what makes a <a href='#short-circuit'>short-circuited step</a> safe, and it is asserted by a test.</p></div><h3 id="awaiting">Finishing a chain<a class="anchor" href="#awaiting" aria-label="Link to Finishing a chain">#</a></h3><p>A chain is <strong>not</strong> a thenable. Finish it with <code>getResult()</code>, or with a terminal — those resolve on their own.</p><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span><span class="snippet-note">getResult() is the one way a chain ends</span></div>
+  <pre><code data-lang="ts">const result = await loadUser(userId).getResult(); // Result&lt;User, UserNotFound&gt;
+
+// the terminals live on the Result, so resolve first
+const user = result.unwrapOr(guestUser);
+const status = result.match({ ok: () =&gt; 200 as const, err: () =&gt; 404 as const });
+
+await loadUser(userId);            // ✗ not thenable — hands back the chain
+await loadUser(userId).unwrapOr(x); // ✗ a chain has no terminals</code></pre>
+</div><div class="note"><span class="note-label">Note</span><p>Being a thenable would mean an <code>async</code> function returning a chain silently unwraps it, and a chain sitting in <code>Promise.all</code> resolves to something other than what you wrote. Keeping it a plain object makes <code>getResult()</code> the single, visible boundary between the chain and the promise world.</p></div><p>A whole request handler stays flat — you never <code>await</code> in the middle of it:</p><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span></div>
+  <pre><code data-lang="ts">const checkout = Result.registerExecution(async (cartId: string) =&gt;
+  loadCart(cartId)
+    .mapValue((cart) =&gt; requireNonEmpty(cart))        // sync step
+    .mapValue(async (cart) =&gt; reserveInventory(cart)) // async step
+    .tap(async (cart) =&gt; await audit.record("inventory.reserved", cart.id))
+    .mapValue((cart) =&gt; chargeSubscription(cart.userId, cart.totalCents))
+    .handleError(RateLimited, async (e) =&gt; {
+      await sleep(e.retryAfterSeconds * 1000);
+      return Result.err(new CheckoutBusy());
+    })
+    .getResult(),
+);</code></pre>
+</div><h3 id="forcing-async">toAsync<a class="anchor" href="#forcing-async" aria-label="Link to toAsync">#</a></h3><p>Occasionally one branch is synchronous while its siblings are not, and you want a single uniform return type. <code>toAsync()</code> is the explicit lift.</p><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span></div>
+  <pre><code data-lang="ts">const resolveTenant = (req: { headers: Record&lt;string, string | undefined&gt; }) =&gt;
+  req.headers["x-tenant"]
+    ? lookupTenant(String(req.headers["x-tenant"])) // already a chain
+    : Result.err(new TenantMissing()).toAsync();    // lifted, so both branches match</code></pre>
+</div><div class="note warn"><span class="note-label">Careful</span><p><strong>A rejection stays a rejection.</strong> If the underlying promise rejects — an SDK threw — the chain rejects too; it does not silently convert the rejection into an error branch. Wrap the throwing part in <a href='#throwing'><code>Result.try</code></a> if that is what you want.</p></div>
+        </section>
+        <!-- ──────────────────────────────────────────────────────────── -->
+        <section id="combining">
+<h2>Combining results<a class="anchor" href="#combining" aria-label="Link to Combining results">#</a></h2><p><code>Result.all</code> turns a tuple of results into a result of a tuple, failing with the <strong>first error in argument order</strong>. It accepts synchronous results, asynchronous chains and bare promises of results, in any mix — which is what a dashboard load actually looks like.</p><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span><span class="snippet-note">The tuple keeps positional types — not an array of a union</span></div>
+  <pre><code data-lang="ts">const page = await Result.all([
+  loadUser(userId),            // an async chain
+  loadSubscription(userId),    // an async chain
+  loadRecentOrders(userId),    // an async chain
+  parseViewOptions(req.query), // a plain Result — no I/O
+]).getResult();
+// Result&lt;
+//   [User, Subscription, Order[], ViewOptions],
+//   UserNotFound | SubscriptionMissing | DatabaseUnavailable | ValidationFailed
+// &gt;
+
+const view = page.mapValue(([user, sub, orders, opts]) =&gt;
+  Result.ok(renderDashboard(user, sub, orders, opts)),
+);</code></pre>
+</div><p>If every member is synchronous you get a <code>Result</code> straight back, with no promise involved. If any member is asynchronous the whole call is, and every member runs <strong>concurrently</strong> — three queries take as long as the slowest, not the sum.</p><div class="note"><span class="note-label">Note</span><p><strong>Order is deterministic.</strong> The reported failure is the first one in <em>argument order</em>, not the first to settle in time. Two runs of the same failing request report the same failure, which is the difference between a reproducible bug and a heisenbug.</p></div><h3 id="collect">collect — every failure, not just the first<a class="anchor" href="#collect" aria-label="Link to collect — every failure, not just the first">#</a></h3><p><code>Result.all</code> tells you <em>that</em> something failed. <code>Result.collect</code> tells you <strong>which</strong> things failed. It takes the same input and produces the same tuple of values on success; on failure the error is a tuple the same length as the input, holding each member's failure at its own index and <code>null</code> where that member succeeded.</p><p>This is the shape a form wants — one round trip, every bad field reported at once:</p><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span><span class="snippet-note">The index is the point: you know which field failed</span></div>
+  <pre><code data-lang="ts">const form = Result.collect([
+  validateEmail(body.email),       // Result&lt;string, ValidationFailed&gt;
+  validatePassword(body.password), // Result&lt;string, ValidationFailed&gt;
+  validateAge(body.age),           // Result&lt;number, ValidationFailed&gt;
+]);
+// Result&lt;
+//   [string, string, number],
+//   [ValidationFailed | null, ValidationFailed | null, ValidationFailed | null]
+// &gt;
+
+const response = form.match({
+  ok: ([email, password, age]) =&gt; ({ status: 200, body: { email, password, age } }),
+  err: (errors) =&gt; ({
+    status: 422,
+    body: {
+      fields: errors.flatMap((e) =&gt; (e ? [{ field: e.field, reason: e.reason }] : [])),
+    },
+  }),
+});
+// → 422 { fields: [{ field: "password", reason: "too short" },
+//                  { field: "age", reason: "must be 18 or older" }] }</code></pre>
+</div><div class="table-wrap"><table><thead><tr><th></th><th><code>all</code></th><th><code>collect</code></th></tr></thead><tbody><tr><td>Value on success</td><td>tuple of values</td><td>tuple of values (identical)</td></tr><tr><td>Error on failure</td><td>the first failure</td><td>a tuple, <code>null</code> where it succeeded</td></tr><tr><td>Error type</td><td>a union of tagged failures</td><td>a tuple of <code>failure | null</code></td></tr><tr><td>Works with <code>handleError</code></td><td>yes</td><td><strong>no</strong> — the error is a tuple</td></tr><tr><td>Reach for it when</td><td>any failure means stop</td><td>the user must see every failure at once</td></tr></tbody></table></div><div class="note warn"><span class="note-label">Careful</span><p>Because the error is a tuple rather than a tagged failure, <code>handleError()</code> cannot match on it — <code>instanceof</code> against an array is never true, so a handler simply never fires. Read a collected failure with <code>match()</code> or <code>error</code> and turn it into whatever your API returns.</p></div><p>It follows the same dispatch rule as everything else, so a form whose checks hit the database — a uniqueness check, say — collects concurrently and still reports every field:</p><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span></div>
+  <pre><code data-lang="ts">const form = await Result.collect([
+  validateEmailFormat(body.email),   // sync
+  ensureEmailIsFree(body.email),     // async: one query
+  ensureUsernameIsFree(body.handle), // async: one query, runs alongside
+]).getResult();</code></pre>
+</div>
+        </section>
+        <!-- ──────────────────────────────────────────────────────────── -->
+        <section id="terminals">
+<p class="eyebrow">Terminals</p>
+<h2>Getting the value out<a class="anchor" href="#terminals" aria-label="Link to Getting the value out">#</a></h2><p>The terminals live on <code>Result</code> only. An asynchronous chain has none — you call <code>getResult()</code> first, and use them on the <code>Result</code> that comes back. That is deliberate: it is what makes a <a href='#short-circuit'>short-circuited step</a> safe.</p><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span></div>
+  <pre><code data-lang="ts">const settled = await loadUser(userId).getResult();
+settled.match({ ok: … , err: … });   // and every other terminal</code></pre>
+</div><div class="table-wrap"><table><thead><tr><th>Method</th><th>Returns</th><th>On the other branch</th></tr></thead><tbody><tr><td><code>match({ ok, err })</code></td><td><code>A | B</code></td><td>runs the other branch</td></tr><tr><td><code>unwrap()</code></td><td><code>T</code></td><td><strong>throws</strong> <code>ResultUnwrapError</code></td></tr><tr><td><code>unwrapError()</code></td><td><code>E</code></td><td><strong>throws</strong> <code>ResultUnwrapError</code></td></tr><tr><td><code>unwrapOr(fallback)</code></td><td><code>T | D</code></td><td>returns <code>fallback</code></td></tr><tr><td><code>unwrapOrElse(fn)</code></td><td><code>T | D</code></td><td>returns the computed fallback</td></tr><tr><td><code>getResult()</code></td><td><code>Promise&lt;Result&lt;T, E&gt;&gt;</code></td><td>— (on both classes)</td></tr><tr><td><code>isOk</code> / <code>isErr</code></td><td><code>boolean</code></td><td>—</td></tr><tr><td><code>value</code> / <code>error</code></td><td><code>T | undefined</code> / <code>E | undefined</code></td><td><code>undefined</code></td></tr></tbody></table></div><h3 id="match">match — the exhaustive one<a class="anchor" href="#match" aria-label="Link to match — the exhaustive one">#</a></h3><p>You cannot forget a branch, and the compiler infers the union of both return types. This is how a failure becomes a response:</p><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span></div>
+  <pre><code data-lang="ts">const charge = await chargeSubscription(userId, 4900).getResult();
+
+const response = charge.match({
+  ok: (charge) =&gt; ({ status: 200, body: { receiptUrl: charge.receiptUrl } }),
+  err: (e) =&gt; {
+    switch (e._tag) {
+      case "UserNotFound":
+        return { status: 404, body: { error: "no such user" } };
+      case "NoPaymentMethod":
+        return { status: 402, body: { error: "add a card first" } };
+      case "PaymentDeclined":
+        return { status: 402, body: { error: "declined", code: e.failureCode } };
+    }
+  },
+});</code></pre>
+</div><h3 id="unwrap">unwrap — the deliberate escape hatch<a class="anchor" href="#unwrap" aria-label="Link to unwrap — the deliberate escape hatch">#</a></h3><p><code>unwrap()</code> is the only place this library throws on purpose. Once the union has been narrowed to <code>never</code> it is provably safe, which makes it the natural end of a fully-handled chain — and a reasonable thing to do at boot, where a failure should stop the process anyway.</p><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span></div>
+  <pre><code data-lang="ts">// application startup: if the config is wrong, do not start.
+// loadConfig reads process.env — no I/O, so this whole chain is synchronous.
+const config = loadConfig(process.env)
+  .handleError(MissingEnvVar, (e) =&gt; Result.err(new FatalMisconfiguration(e.name)))
+  .unwrapOrElse((e) =&gt; {
+    logger.fatal({ tag: e._tag }, "invalid configuration");
+    process.exit(1);
+  });</code></pre>
+</div><div class="note danger"><span class="note-label">Don't</span><p>Reaching for <code>unwrap()</code> in the <em>middle</em> of a chain throws away the guarantee you adopted the library for. Keep it at the top of your program, at a framework boundary, or in tests.</p></div><p>The thrown <code>ResultUnwrapError</code> carries the original failure on <code>.taggedError</code>, so nothing is lost when it crosses back into exception-land:</p><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span></div>
+  <pre><code data-lang="ts">try {
+  (await loadUser("u_missing").getResult()).unwrap();
+} catch (thrown) {
+  if (thrown instanceof ResultUnwrapError) {
+    thrown.taggedError; // the UserNotFound instance, with its userId
+    thrown.message;     // 'Called unwrap() on an error Result (UserNotFound)'
+  }
+}</code></pre>
+</div><h3 id="value-error">Why value and error are optional<a class="anchor" href="#value-error" aria-label="Link to Why value and error are optional">#</a></h3><p><code>value</code> and <code>error</code> are typed as <code>T | undefined</code> and <code>E | undefined</code>. A getter cannot carry a type predicate in TypeScript, so <code>isOk</code> cannot narrow <code>this</code> the way a discriminated union would.</p><p>That is a deliberate trade: keeping <code>Result</code> a single class with a boolean flag is what makes the implementation small enough to read. When you want the compiler to prove which branch you are on, use <code>match</code> — it is the narrowing path, and it is exhaustive.</p>
+        </section>
+        <!-- ──────────────────────────────────────────────────────────── -->
+        <section id="throwing">
+<p class="eyebrow">Interop</p>
+<h2>Bridging code that throws<a class="anchor" href="#throwing" aria-label="Link to Bridging code that throws">#</a></h2><p><code>Result.try</code> runs a function and converts anything it throws into a tagged failure. This is the boundary between the throwing world — every SDK you did not write — and the typed one.</p><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span></div>
+  <pre><code data-lang="ts">// a third-party SDK that rejects on network and HTTP errors alike
+const charge = await Result.try(
+  () =&gt; stripe.charges.create({ amount, customer }),
+  (thrown) =&gt; new PaymentGatewayError(String(thrown)),
+).getResult();
+// Result&lt;Charge, PaymentGatewayError&gt;
+
+// parsing a webhook body
+const event = Result.try(
+  () =&gt; JSON.parse(rawBody) as StripeEvent,
+  (thrown) =&gt; new MalformedWebhook(String(thrown)),
+);
+// Result&lt;StripeEvent, MalformedWebhook&gt;</code></pre>
+</div><p>It follows <a href='#dispatch'>the dispatch rule</a>: a promise-returning body gives an asynchronous chain, a plain one gives a <code>Result</code>. On the asynchronous path it catches a synchronous throw <em>and</em> a rejected promise, which are two different failure modes that are easy to get wrong by hand.</p><div class="note"><span class="note-label">Note</span><p><code>onThrow</code> receives the thrown value as <code>unknown</code>, not as <code>Error</code>. JavaScript lets you throw anything, and plenty of libraries do — that is exactly how <code>e.message</code> becomes <code>undefined</code> in production.</p></div><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span></div>
+  <pre><code data-lang="ts">const parsed = Result.try(
+  () =&gt; schema.parse(input), // zod throws a ZodError
+  (thrown) =&gt;
+    thrown instanceof ZodError
+      ? new ValidationFailed(thrown.issues[0].path.join("."), thrown.issues[0].message)
+      : new ValidationFailed("&lt;unknown&gt;", String(thrown)),
+);</code></pre>
+</div><p>The mirror direction — going back to exceptions at the edge of your typed core — is <code>unwrap()</code>, or an explicit <code>throw</code> inside <code>match</code> when a framework insists on it.</p>
+        </section>
+        <!-- ──────────────────────────────────────────────────────────── -->
+        <section id="recipes">
+<p class="eyebrow">Patterns</p>
+<h2>Recipes<a class="anchor" href="#recipes" aria-label="Link to Recipes">#</a></h2><h3 id="recipe-http">Mapping failures onto a response<a class="anchor" href="#recipe-http" aria-label="Link to Mapping failures onto a response">#</a></h3><p>Because <code>_tag</code> is a literal, a <code>switch</code> over it narrows in every branch — <code>e.retryAfterSeconds</code> is available only where it actually exists. One place decides status codes, and adding a failure upstream breaks the build here rather than in production.</p><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span></div>
+  <pre><code data-lang="ts">app.get("/api/orders/:id", async (req, res) =&gt; {
+  const loaded = await loadOrder(req.params.id, req.user.id).getResult();
+
+  const response = loaded.match({
+    ok: (order) =&gt; ({ status: 200, headers: {}, body: order }),
+    err: (e) =&gt; {
+      switch (e._tag) {
+        case "OrderNotFound":
+          return { status: 404, headers: {}, body: { error: "not found" } };
+        case "NotYourOrder":
+          return { status: 403, headers: {}, body: { error: "forbidden" } };
+        case "RateLimited":
+          return {
+            status: 429,
+            headers: { "Retry-After": String(e.retryAfterSeconds) },
+            body: { error: "slow down" },
+          };
+        case "DatabaseUnavailable":
+          logger.error({ err: e }, "order lookup failed"); // a real Error: has a stack
+          return { status: 503, headers: {}, body: { error: "try again shortly" } };
+      }
+    },
+  });
+
+  res.status(response.status).set(response.headers).json(response.body);
+});</code></pre>
+</div><h3 id="recipe-exhaustive">Making a new failure a build error<a class="anchor" href="#recipe-exhaustive" aria-label="Link to Making a new failure a build error">#</a></h3><p>Force the compiler to fail when a failure appears upstream that this boundary has not considered:</p><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span><span class="snippet-note">The one line that turns a new failure into a failed build</span></div>
+  <pre><code data-lang="ts">const toStatus = (e: OrderNotFound | NotYourOrder | RateLimited): number =&gt; {
+  switch (e._tag) {
+    case "OrderNotFound":
+      return 404;
+    case "NotYourOrder":
+      return 403;
+    case "RateLimited":
+      return 429;
+    default: {
+      const _exhaustive: never = e; // ← breaks when a fourth failure is added
+      return 500;
+    }
+  }
+};</code></pre>
+</div><h3 id="recipe-fallback">Cache, then database, then origin<a class="anchor" href="#recipe-fallback" aria-label="Link to Cache, then database, then origin">#</a></h3><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span></div>
+  <pre><code data-lang="ts">const avatar = (
+  await fromCache(userId)
+    .handleError(CacheMiss, () =&gt; fromDatabase(userId))
+    .handleError(NotStored, () =&gt; fromGravatar(userId))
+    .tapError((e) =&gt; metrics.increment("avatar.miss", { tag: e._tag }))
+    .getResult()
+).unwrapOr(defaultAvatarUrl);</code></pre>
+</div><h3 id="recipe-retry">Retrying only what is worth retrying<a class="anchor" href="#recipe-retry" aria-label="Link to Retrying only what is worth retrying">#</a></h3><p>A rate limit is worth another attempt; a declined card is not. Because the two are separate classes, that policy is expressible:</p><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span><span class="snippet-note">The chain type is inferred, never imported</span></div>
+  <pre><code data-lang="ts">// callExternalApi: AsyncResult&lt;Response, RateLimited | PaymentDeclined | CardExpired&gt;
+// The chain type is inferred from the function that produces it — never imported.
+type ApiCall = ReturnType&lt;typeof callExternalApi&gt;;
+
+const withRetry = (attempt: () =&gt; ApiCall, left: number): ApiCall =&gt;
+  attempt().handleError(RateLimited, async (e) =&gt; {
+    if (left &lt;= 0) return Result.err(e); // out of attempts: surface the rate limit
+    await sleep(e.retryAfterSeconds * 1000);
+    return withRetry(attempt, left - 1).getResult();
+  });
+
+const response = await withRetry(() =&gt; callExternalApi(request), 3).getResult();
+// PaymentDeclined and CardExpired were never retried — they are not the handled class</code></pre>
+</div><h3 id="recipe-layers">Keeping layers honest<a class="anchor" href="#recipe-layers" aria-label="Link to Keeping layers honest">#</a></h3><p>Each layer handles what it can and re-tags what it cannot, so the union at the transport layer is exactly the set of responses you must write — no more, no fewer:</p><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span></div>
+  <pre><code data-lang="ts">// repository — infrastructure vocabulary only
+const findOrderRow = Result.registerExecution(async (id: string) =&gt; { ... });
+// AsyncResult&lt;OrderRow, RowNotFound | DatabaseUnavailable&gt;
+
+// service — retires infrastructure detail, adds domain meaning
+const loadOrder = Result.registerExecution(async (id: string, viewerId: string) =&gt;
+  findOrderRow(id)
+    .handleError(RowNotFound, () =&gt; Result.err(new OrderNotFound(id)))
+    .mapValue((row) =&gt;
+      row.userId === viewerId ? Result.ok(row) : Result.err(new NotYourOrder()),
+    )
+    .mapValue((row) =&gt; Result.ok(toDomain(row)))
+    .getResult(),
+);
+// AsyncResult&lt;Order, OrderNotFound | NotYourOrder | DatabaseUnavailable | InvalidRow&gt;
+
+// transport — the union above is the exact list of cases the handler must map</code></pre>
+</div>
+        </section>
+        <!-- ──────────────────────────────────────────────────────────── -->
+        <section id="typescript">
+<p class="eyebrow">Types</p>
+<h2>TypeScript notes<a class="anchor" href="#typescript" aria-label="Link to TypeScript notes">#</a></h2><h3 id="inference-rules">How the union moves<a class="anchor" href="#inference-rules" aria-label="Link to How the union moves">#</a></h3><div class="table-wrap"><table><thead><tr><th>Operation</th><th>Effect on the error union</th></tr></thead><tbody><tr><td><code>mapValue(fn)</code></td><td>adds whatever <code>fn</code> can fail with</td></tr><tr><td><code>mapError(fn)</code></td><td><strong>replaces</strong> the union entirely</td></tr><tr><td><code>handleError(A, B, fn)</code></td><td>removes <code>A</code> and <code>B</code>, adds <code>fn</code>'s failures</td></tr><tr><td><code>tap</code> / <code>tapError</code></td><td>unchanged</td></tr><tr><td><code>Result.all([...])</code></td><td>the union of every member</td></tr><tr><td><code>Result.collect([...])</code></td><td>a <em>tuple</em> of every member, each widened with <code>null</code></td></tr><tr><td><code>Result.registerExecution(fn)</code></td><td>collapses a union of results into one result</td></tr></tbody></table></div><h3 id="naming-async">Naming an asynchronous chain<a class="anchor" href="#naming-async" aria-label="Link to Naming an asynchronous chain">#</a></h3><p>The asynchronous class is not exported, so you never write it by hand. When you do need to name one — a helper that takes a chain, or a declared return type — infer it from the function that produces one:</p><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span><span class="snippet-note">Inference names it for you — there is nothing to import</span></div>
+  <pre><code data-lang="ts">const loadOrder = Result.registerExecution(async (id: string) =&gt; { ... });
+
+type OrderChain = ReturnType&lt;typeof loadOrder&gt;;
+type OrderResult = Awaited&lt;ReturnType&lt;OrderChain["getResult"]&gt;&gt;; // Result&lt;Order, …&gt;
+
+// middleware that works on any chain this function returns
+const instrumented = (chain: OrderChain, route: string) =&gt;
+  chain
+    .tap(() =&gt; metrics.increment("order.loaded", { route }))
+    .tapError((e) =&gt; metrics.increment("order.failed", { route, tag: e._tag }));</code></pre>
+</div><p>In practice this comes up rarely: a chain is usually built and consumed in one expression, and <code>getResult()</code> hands you back an ordinary <code>Result</code>, which <em>is</em> exported and nameable.</p><h3 id="proving-inference">The inference rules are tested<a class="anchor" href="#proving-inference" aria-label="Link to The inference rules are tested">#</a></h3><p>The library ships 35 compile-time assertions in <code>tests/types.test-d.ts</code>. Nothing in that file runs — <code>tsc</code> is the test. If a union stops collapsing, if <code>handleError</code> stops subtracting, or if the sync/async dispatch picks the wrong branch, the build fails on the exact assertion that regressed.</p><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span><span class="snippet-note">tests/types.test-d.ts — run with npm run typecheck</span></div>
+  <pre><code data-lang="ts">type Equal&lt;X, Y&gt; =
+  (&lt;T&gt;() =&gt; T extends X ? 1 : 2) extends &lt;T&gt;() =&gt; T extends Y ? 1 : 2 ? true : false;
+type Expect&lt;T extends true&gt; = T;
+
+// handleError subtracts exactly the classes named, and nothing more
+export type _handled = Expect&lt;Equal&lt;typeof handled, Result&lt;string | number, BError&gt;&gt;&gt;;
+const handled = registered(1).handleError(AError, (e) =&gt; Result.ok(e.limit));
+
+// a sync callback keeps the chain sync; an async one does not
+export type _tapSync = Expect&lt;Equal&lt;typeof tapped, Result&lt;string, AError | BError&gt;&gt;&gt;;
+const tapped = registered(1).tap(() =&gt; {});</code></pre>
+</div>
+        </section>
+        <!-- ──────────────────────────────────────────────────────────── -->
+        <section id="api">
+<p class="eyebrow">Reference</p>
+<h2>API reference<a class="anchor" href="#api" aria-label="Link to API reference">#</a></h2><h3 id="api-result-static">Result — statics<a class="anchor" href="#api-result-static" aria-label="Link to Result — statics">#</a></h3><div class="opts"><div class="opt"><div class="opt-name">Result.ok()<span class="opt-type">(): Result&lt;void, never&gt;</span></div><div class="opt-body"><p>Success carrying nothing.</p></div></div><div class="opt"><div class="opt-name">Result.ok(value)<span class="opt-type">&lt;T&gt;(value: T): Result&lt;T, never&gt;</span></div><div class="opt-body"><p>Success carrying <code>value</code>. An explicit <code>undefined</code> is a value, not a failure.</p></div></div><div class="opt"><div class="opt-name">Result.empty()<span class="opt-type">(): Result&lt;null, never&gt;</span></div><div class="opt-body"><p>Success carrying <code>null</code>.</p></div></div><div class="opt"><div class="opt-name">Result.err(error)<span class="opt-type">&lt;E extends Tagged&gt;(error: E): Result&lt;never, E&gt;</span></div><div class="opt-body"><p>Failure carrying a tagged failure. Rejects a widened <code>_tag</code> at compile time.</p></div></div><div class="opt"><div class="opt-name">Result.try(fn, onThrow)<span class="opt-type">(() =&gt; T, (thrown: unknown) =&gt; E)</span></div><div class="opt-body"><p>Runs <code>fn</code>, converting a throw — or a rejection — into a tagged failure. Asynchronous when <code>fn</code> returns a promise.</p></div></div><div class="opt"><div class="opt-name">Result.registerExecution(fn)<span class="opt-type">((...a: A) =&gt; R) =&gt; (...a: A) =&gt; chain</span></div><div class="opt-body"><p>Collapses a union of results into a result of unions. Asynchronous when the body is.</p></div></div><div class="opt"><div class="opt-name">Result.all(results)<span class="opt-type">(readonly results[]) =&gt; chain of a tuple</span></div><div class="opt-body"><p>Tuple of results → result of a tuple. First failure in argument order wins. Asynchronous if any member is; members run concurrently.</p></div></div><div class="opt"><div class="opt-name">Result.collect(results)<span class="opt-type">(readonly results[]) =&gt; chain of a tuple</span></div><div class="opt-body"><p>Same values, but the error is a <strong>tuple</strong> of every member's failure with <code>null</code> where it succeeded. See <a href='#collect'>collect</a>.</p></div></div></div><h3 id="api-result-instance">Result — instance<a class="anchor" href="#api-result-instance" aria-label="Link to Result — instance">#</a></h3><p>The chaining methods and terminals below exist on an asynchronous chain too, under the same names with the same meanings — the async one just returns promises. The accessors and <code>toAsync()</code> are synchronous-only; <code>getResult()</code> is chain-only. There is no <code>then</code>: a chain is not thenable.</p><div class="opts"><div class="opt"><div class="opt-name">isOk · isErr<span class="opt-type">boolean</span></div><div class="opt-body"><p>Which branch this is.</p></div></div><div class="opt"><div class="opt-name">value · error<span class="opt-type">T | undefined · E | undefined</span></div><div class="opt-body"><p>The payload. See <a href='#value-error'>why they are optional</a>.</p></div></div><div class="opt"><div class="opt-name">mapValue(fn)<span class="opt-type">(value: T) =&gt; result | promise</span></div><div class="opt-body"><p>Transform the value; failures pass through. Failures accumulate.</p></div></div><div class="opt"><div class="opt-name">mapError(fn)<span class="opt-type">(error: E) =&gt; result | promise</span></div><div class="opt-body"><p>Transform the failure; successes pass through. The union is replaced.</p></div></div><div class="opt"><div class="opt-name">handleError(...classes, handler)<span class="opt-type">ErrorClass[], (e) =&gt; result | promise</span></div><div class="opt-body"><p>Handle specific classes; subtracts them from the union. Matching is <code>instanceof</code>.</p></div></div><div class="opt"><div class="opt-name">tap(fn) · tapError(fn)<span class="opt-type">(value|error) =&gt; void | Promise&lt;void&gt;</span></div><div class="opt-body"><p>Side effect; returns the chain unchanged. An async effect is awaited.</p></div></div><div class="opt"><div class="opt-name">match({ ok, err })<span class="opt-type">=&gt; A | B</span></div><div class="opt-body"><p>Collapse both branches into one value. Exhaustive.</p></div></div><div class="opt"><div class="opt-name">unwrap() · unwrapError()<span class="opt-type">(): T · (): E</span></div><div class="opt-body"><p>Extract, or throw <code>ResultUnwrapError</code>.</p></div></div><div class="opt"><div class="opt-name">unwrapOr(d) · unwrapOrElse(fn)<span class="opt-type">(): T | D</span></div><div class="opt-body"><p>Extract with a fallback.</p></div></div><div class="opt"><div class="opt-name">toAsync()<span class="opt-type">(): async chain</span></div><div class="opt-body"><p>Lift a synchronous result into an asynchronous chain. <code>Result</code> only.</p></div></div><div class="opt"><div class="opt-name">getResult()<span class="opt-type">(): Promise&lt;Result&lt;T, E&gt;&gt;</span></div><div class="opt-body"><p>Resolve an asynchronous chain to a plain <code>Result</code>. Chain only — see <a href='#short-circuit'>the caveat</a> for why it still works on a stand-in.</p></div></div></div><h3 id="api-errors">Failure base classes<a class="anchor" href="#api-errors" aria-label="Link to Failure base classes">#</a></h3><div class="opts"><div class="opt"><div class="opt-name">Tagged(tag)<span class="opt-type">&lt;Tag extends string&gt;(tag: Tag)</span></div><div class="opt-body"><p>Returns an abstract base class stamping a literal <code>_tag</code>. For domain outcomes — no stack trace, no allocation beyond the object. Each call returns a distinct class.</p></div></div><div class="opt"><div class="opt-name">TaggedError(tag)<span class="opt-type">&lt;Tag extends string&gt;(tag: Tag)</span></div><div class="opt-body"><p>The same, but the base also extends <code>Error</code>: a <code>message</code>, a <code>stack</code>, and <code>name === tag</code>. For infrastructure failures you will log or report.</p></div></div><div class="opt"><div class="opt-name">ResultUnwrapError<span class="opt-type">class extends Error</span></div><div class="opt-body"><p>Thrown by <code>unwrap()</code> / <code>unwrapError()</code>. Carries the original failure on <code>.taggedError</code>.</p></div></div></div>
+        </section>
+        <!-- ──────────────────────────────────────────────────────────── -->
+        <section id="comparison">
+<p class="eyebrow">Context</p>
+<h2>How it compares<a class="anchor" href="#comparison" aria-label="Link to How it compares">#</a></h2><div class="table-wrap"><table><thead><tr><th></th><th>this</th><th>neverthrow</th><th>Effect</th></tr></thead><tbody><tr><td>Error union in the type</td><td>yes</td><td>yes</td><td>yes</td></tr><tr><td>Handle by error class</td><td><strong>yes, subtractive</strong></td><td>manual</td><td>yes, via tags</td></tr><tr><td>Sync and async</td><td><strong>one API</strong></td><td>two types, two APIs</td><td>one API</td></tr><tr><td>Runtime to install</td><td>none</td><td>none</td><td>yes</td></tr><tr><td>Generator syntax</td><td>no</td><td>no</td><td>yes</td></tr><tr><td>Dependency injection</td><td>no</td><td>no</td><td>yes</td></tr><tr><td>Concurrency · retries · scheduling</td><td>no</td><td>no</td><td>yes</td></tr><tr><td>Bundle size</td><td><strong>1.2 KB</strong> min+gz</td><td>comparable</td><td>substantially larger</td></tr><tr><td>Names to import</td><td><strong>4</strong></td><td>a dozen or so</td><td>many</td></tr></tbody></table></div><p>Pick <a href='https://effect.website/'>Effect</a> when you want the whole platform — it is a genuinely better answer for large systems that need structured concurrency, resource safety and injection. Pick this one when you want typed errors and nothing else in the way.</p><p>The practical difference against <a href='https://github.com/supermacro/neverthrow'>neverthrow</a> is two things: <code>handleError</code>, which removes a failure class from the union rather than making you rebuild it by hand, and the absence of a separate asynchronous type to convert into and out of.</p>
+        </section>
+        <!-- ──────────────────────────────────────────────────────────── -->
+        <section id="exports">
+<h2>Exports<a class="anchor" href="#exports" aria-label="Link to Exports">#</a></h2><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">ts</span></div>
+  <pre><code data-lang="ts">import {
+  Result,
+  Tagged,
+  TaggedError,
+  ResultUnwrapError,
+} from "@dmytromykhailiuk/typed-error-execution";</code></pre>
+</div><p>That is the entire public surface. The asynchronous chain class, the type helpers and the runtime guards are reached through <code>Result</code> or inferred — see <a href='#naming-async'>naming an asynchronous chain</a> if you need to write one down.</p><h4>Running it locally</h4><div class="snippet">
+  <div class="snippet-head"><span class="snippet-lang">sh</span></div>
+  <pre><code data-lang="sh">npm run playground        # a runnable tour of every feature
+npm run playground:watch  # the same, re-running on save
+npm test                  # 156 runtime tests, 100% coverage
+npm run typecheck         # 35 compile-time inference assertions
+npm run verify            # lint + typecheck + test + build</code></pre>
+</div>
+        </section>
+
+        <footer>
+          <p>
+            MIT ·
+            <a href="https://github.com/dmytromykhailiuk/typed-error-execution"
+              >github.com/dmytromykhailiuk/typed-error-execution</a
+            >
+            · Run the live tour with <code>npm run playground</code>.
+          </p>
+        </footer>
+      </main>
+    </div>
+
+    <script>
+      (function () {
+        "use strict";
+
+        // Everything here is progressive enhancement: the page is fully readable
+        // without it. Each part is isolated so one failure cannot take the rest down.
+        function attempt(fn) {
+          try {
+            fn();
+          } catch (err) {
+            if (window.console) console.warn("[docs]", err);
+          }
+        }
+
+        /* ── theme toggle ─────────────────────────────────────────────── */
+        attempt(function () {
+          var root = document.documentElement;
+          var toggle = document.getElementById("theme-toggle");
+          if (!toggle) return;
+
+          function prefersDark() {
+            // matchMedia is missing in some embedded/older engines — treating that
+            // as "light" is harmless, throwing here would kill the whole script.
+            return (
+              typeof window.matchMedia === "function" &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches
+            );
+          }
+          function currentTheme() {
+            return (
+              root.getAttribute("data-theme") ||
+              (prefersDark() ? "dark" : "light")
+            );
+          }
+          // The icon itself is chosen in CSS from `data-theme`; JS only flips
+          // the attribute and keeps the accessible name in step.
+          function label() {
+            toggle.setAttribute(
+              "aria-label",
+              currentTheme() === "dark"
+                ? "Switch to light theme"
+                : "Switch to dark theme"
+            );
+          }
+          toggle.addEventListener("click", function () {
+            root.setAttribute(
+              "data-theme",
+              currentTheme() === "dark" ? "light" : "dark"
+            );
+            label();
+          });
+          label();
+        });
+
+        /* ── syntax highlighting ──────────────────────────────────────── */
+        var KEYWORDS = new Set([
+          "const",
+          "let",
+          "var",
+          "function",
+          "return",
+          "import",
+          "export",
+          "from",
+          "type",
+          "interface",
+          "extends",
+          "implements",
+          "new",
+          "class",
+          "if",
+          "else",
+          "for",
+          "of",
+          "in",
+          "await",
+          "async",
+          "true",
+          "false",
+          "null",
+          "undefined",
+          "as",
+          "typeof",
+          "default",
+          "this",
+          "void",
+        ]);
+        var PATTERN =
+          /(\/\/[^\n]*|\/\*[\s\S]*?\*\/)|("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`)|(\b\d+(?:\.\d+)?\b)|([A-Za-z_$][\w$]*)/g;
+
+        function esc(s) {
+          return s
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+        }
+
+        function highlight(code, isJson) {
+          var out = "",
+            last = 0,
+            m;
+          PATTERN.lastIndex = 0;
+          while ((m = PATTERN.exec(code)) !== null) {
+            out += esc(code.slice(last, m.index));
+            if (m[1]) {
+              out += '<span class="tok-com">' + esc(m[1]) + "</span>";
+            } else if (m[2]) {
+              // In JSON, a string immediately followed by ':' is a key.
+              var after = code.slice(PATTERN.lastIndex);
+              var isKey = isJson && /^\s*:/.test(after);
+              out +=
+                '<span class="' +
+                (isKey ? "tok-key" : "tok-str") +
+                '">' +
+                esc(m[2]) +
+                "</span>";
+            } else if (m[3]) {
+              out += '<span class="tok-num">' + esc(m[3]) + "</span>";
+            } else if (m[4] && KEYWORDS.has(m[4])) {
+              out += '<span class="tok-kw">' + esc(m[4]) + "</span>";
+            } else {
+              out += esc(m[0]);
+            }
+            last = PATTERN.lastIndex;
+          }
+          return out + esc(code.slice(last));
+        }
+
+        attempt(function () {
+          Array.prototype.forEach.call(
+            document.querySelectorAll("code[data-lang]"),
+            function (block) {
+              var lang = block.getAttribute("data-lang");
+              if (lang === "sh") return;
+              block.innerHTML = highlight(block.textContent, lang === "json");
+            }
+          );
+        });
+
+        /* ── table-of-contents scroll spy ─────────────────────────────── */
+        attempt(function () {
+          if (!("IntersectionObserver" in window)) return;
+
+          var byId = {};
+          var targets = [];
+          Array.prototype.forEach.call(
+            document.querySelectorAll("nav.toc a"),
+            function (link) {
+              var id = link.getAttribute("href").slice(1);
+              var el = document.getElementById(id);
+              if (!el) return;
+              byId[id] = link;
+              targets.push(el);
+            }
+          );
+          if (!targets.length) return;
+
+          var active = null;
+          function setActive(id) {
+            if (id === active) return;
+            if (active && byId[active])
+              byId[active].classList.remove("is-active");
+            active = id;
+            if (byId[id]) byId[id].classList.add("is-active");
+          }
+
+          var visible = {};
+          var observer = new IntersectionObserver(
+            function (entries) {
+              entries.forEach(function (entry) {
+                visible[entry.target.id] = entry.isIntersecting;
+              });
+              // Highlight the first section, in document order, that is on screen.
+              for (var i = 0; i < targets.length; i++) {
+                if (visible[targets[i].id]) {
+                  setActive(targets[i].id);
+                  return;
+                }
+              }
+            },
+            { rootMargin: "0px 0px -70% 0px", threshold: 0 }
+          );
+          targets.forEach(function (el) {
+            observer.observe(el);
+          });
+        });
+      })();
+    </script>
+  </body>
+</html>
