@@ -27,7 +27,11 @@ const res2 = getFromDb(-1)
 
 const res3 = getFromDb(-1).mapValue((value) => Result.ok(value ** 2));
 
-const res4 = Result.err(new NotFoundError()).mapValue(() => Promise.resolve(Result.ok(2)));
+const res4 = Result.err(new NotFoundError()).mapValue(() =>
+  Promise.resolve(Result.ok(2))
+);
+
+const res5 = Result.all([Result.ok(true), Result.ok(5), Result.ok("4")]);
 
 (async () => {
   console.log("res1Value", res1.value);
@@ -35,4 +39,6 @@ const res4 = Result.err(new NotFoundError()).mapValue(() => Promise.resolve(Resu
   console.log("res3", res3.isErr, res3.value, res3.error);
   const res4Sync = await res4.getResult();
   console.log(res4 instanceof Result, "res4", res4Sync.isErr, res4Sync.error);
+  const res5Sync = await res5.getResult();
+  console.log(res4 instanceof Result, "res5", res5Sync.isOk, res5Sync.value);
 })();

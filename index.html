@@ -187,14 +187,6 @@
         overflow-y: auto;
         padding: 2.25rem 0 3rem;
       }
-      @media (max-width: 62rem) {
-        .rail {
-          position: static;
-          max-height: none;
-          overflow: visible;
-          padding-bottom: 0;
-        }
-      }
       .brand {
         display: flex;
         align-items: baseline;
@@ -331,37 +323,142 @@
         display: none;
       }
 
-      /* keep the toggle clear of the sidebar on narrow screens */
-      @media (max-width: 62rem) {
-        .rail {
-          padding-right: 3rem;
-        }
+      /* ── mobile top bar: hamburger (left) + theme toggle (right) ──────── */
+      /* Hidden on desktop; the whole apparatus only appears below 62rem.    */
+      .mobile-bar {
+        display: none;
+      }
+      .nav-toggle {
+        display: grid;
+        place-items: center;
+        width: 2.35rem;
+        height: 2.35rem;
+        padding: 0;
+        color: var(--ink-2);
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 0.6rem;
+        box-shadow: var(--shadow);
+        cursor: pointer;
+        transition: color 0.12s, border-color 0.12s, background 0.12s;
+      }
+      .nav-toggle:hover {
+        color: var(--accent);
+        border-color: var(--accent);
+        background: var(--accent-soft);
+      }
+      .nav-toggle:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      .nav-toggle .icon {
+        width: 1.3rem;
+        height: 1.3rem;
+        grid-area: 1 / 1; /* both icons share one cell, so swapping never shifts */
+      }
+      .nav-toggle .icon-close {
+        display: none;
+      }
+      .nav-scrim {
+        display: none;
       }
 
-      /* mobile TOC: a plain container on desktop, a collapsible panel below 62rem */
       @media (max-width: 62rem) {
-        .toc-shell {
-          border: 1px solid var(--line);
-          border-radius: 0.6rem;
+        /* the bar itself */
+        .mobile-bar {
+          display: flex;
+          align-items: center;
+          gap: 0.7rem;
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 3.4rem;
+          padding: 0 0.9rem;
           background: var(--surface);
-          padding: 0.35rem 0.8rem;
-          margin-bottom: 1.5rem;
+          border-bottom: 1px solid var(--line);
+          box-shadow: var(--shadow);
+          z-index: 40;
+        }
+        .mobile-bar .bar-brand {
+          font: 600 0.95rem/1 ui-monospace, SFMono-Regular, Menlo, Consolas,
+            monospace;
+          color: var(--accent);
+          letter-spacing: -0.01em;
+        }
+        /* the existing theme toggle rides on the right end of the bar */
+        .theme-toggle {
+          top: 0.525rem;
+          right: 0.9rem;
+          border-radius: 0.6rem;
+          z-index: 41;
+        }
+        /* make room for the fixed bar and keep anchors clear of it */
+        body {
+          padding-top: 3.4rem;
+        }
+        html {
+          scroll-padding-top: 4.4rem;
+        }
+
+        /* hamburger flips to a close icon while the drawer is open */
+        body.nav-open .nav-toggle .icon-menu {
+          display: none;
+        }
+        body.nav-open .nav-toggle .icon-close {
+          display: block;
+        }
+
+        /* dimmed backdrop behind the drawer */
+        .nav-scrim {
+          display: block;
+          position: fixed;
+          inset: 3.4rem 0 0;
+          background: rgba(8, 9, 12, 0.42);
+          opacity: 0;
+          visibility: hidden;
+          transition: opacity 0.18s, visibility 0.18s;
+          z-index: 35;
+        }
+        body.nav-open .nav-scrim {
+          opacity: 1;
+          visibility: visible;
+        }
+
+        /* the sidebar becomes a drawer that drops down from the bar */
+        .rail {
+          position: fixed;
+          top: 3.4rem;
+          left: 0;
+          right: 0;
+          max-height: calc(100dvh - 3.4rem);
+          overflow-y: auto;
+          padding: 1.4rem 1.6rem 2rem;
+          background: var(--ground);
+          border-bottom: 1px solid var(--line);
+          box-shadow: var(--shadow);
+          z-index: 36;
+          transform: translateY(-0.5rem);
+          opacity: 0;
+          visibility: hidden;
+          transition: opacity 0.18s, transform 0.18s, visibility 0.18s;
+        }
+        body.nav-open .rail {
+          transform: none;
+          opacity: 1;
+          visibility: visible;
+        }
+
+        /* inside the drawer the TOC is always expanded — no inner collapse */
+        .toc-shell {
+          border: 0;
+          background: none;
+          padding: 0;
+          margin: 0;
         }
         .toc-shell > summary {
-          cursor: pointer;
-          font: 600 0.8rem/2.2 system-ui, sans-serif;
-          color: var(--ink-2);
-        }
-        .toc-shell[open] > summary {
-          border-bottom: 1px solid var(--line-2);
-          margin-bottom: 0.5rem;
-        }
-        .toc-shell > summary::marker {
-          color: var(--accent);
-        }
-        .toc-shell .toc-title {
           display: none;
-        } /* the summary already says "Contents" */
+        }
       }
       @media (min-width: 62.001rem) {
         .toc-shell > summary {
@@ -514,6 +611,20 @@
         padding: 0.08em 0.34em;
         color: var(--ink);
         white-space: nowrap;
+      }
+      /* On a phone a long inline token like
+         `{ provide, useValue | useExisting, … }` is wider than the screen and,
+         kept on one line, pushes the whole page sideways (content gets clipped).
+         Below 62rem let these wrap; desktop keeps them on a single line. */
+      @media (max-width: 62rem) {
+        p > code,
+        li > code,
+        h3 > code,
+        h2 > code,
+        dt > code {
+          white-space: normal;
+          overflow-wrap: anywhere;
+        }
       }
 
       /* code blocks */
@@ -727,6 +838,19 @@
     </style>
   </head>
   <body>
+    <header class="mobile-bar">
+      <button class="nav-toggle" type="button" id="nav-toggle" aria-label="Open navigation" aria-controls="site-rail" aria-expanded="false">
+        <svg class="icon icon-menu" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+        </svg>
+        <svg class="icon icon-close" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+        </svg>
+      </button>
+      <span class="bar-brand">typed-error-execution</span>
+    </header>
+    <div class="nav-scrim" id="nav-scrim"></div>
+
     <button class="theme-toggle" type="button" id="theme-toggle" aria-label="Switch theme">
       <svg class="icon icon-moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <path
@@ -747,7 +871,7 @@
     </button>
 
     <div class="shell">
-      <div class="rail">
+      <div class="rail" id="site-rail">
         <div class="brand">
           <span class="brand-mark">typed-error-execution</span>
           <span class="brand-ver">1.0.0</span>
@@ -1588,6 +1712,44 @@ npm run verify            # lint + typecheck + test + build</code></pre>
             label();
           });
           label();
+        });
+
+        /* ── mobile navigation drawer ─────────────────────────────────── */
+        attempt(function () {
+          var body = document.body;
+          var toggle = document.getElementById("nav-toggle");
+          var scrim = document.getElementById("nav-scrim");
+          var rail = document.getElementById("site-rail");
+          if (!toggle || !rail) return;
+
+          function setOpen(open) {
+            body.classList.toggle("nav-open", open);
+            toggle.setAttribute("aria-expanded", open ? "true" : "false");
+            toggle.setAttribute(
+              "aria-label",
+              open ? "Close navigation" : "Open navigation"
+            );
+          }
+          toggle.addEventListener("click", function () {
+            setOpen(!body.classList.contains("nav-open"));
+          });
+          if (scrim) {
+            scrim.addEventListener("click", function () {
+              setOpen(false);
+            });
+          }
+          // picking a destination closes the drawer
+          Array.prototype.forEach.call(
+            rail.querySelectorAll("nav.toc a"),
+            function (link) {
+              link.addEventListener("click", function () {
+                setOpen(false);
+              });
+            }
+          );
+          document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") setOpen(false);
+          });
         });
 
         /* ── syntax highlighting ──────────────────────────────────────── */
