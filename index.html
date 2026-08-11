@@ -1608,7 +1608,7 @@ const instrumented = (chain: OrderChain, route: string) =&gt;
   chain
     .tap(() =&gt; metrics.increment("order.loaded", { route }))
     .tapError((e) =&gt; metrics.increment("order.failed", { route, tag: e._tag }));</code></pre>
-</div><p>In practice this comes up rarely: a chain is usually built and consumed in one expression, and <code>getResult()</code> hands you back an ordinary <code>Result</code>, which <em>is</em> exported and nameable.</p><h3 id="proving-inference">The inference rules are tested<a class="anchor" href="#proving-inference" aria-label="Link to The inference rules are tested">#</a></h3><p>The library ships 35 compile-time assertions in <code>tests/types.test-d.ts</code>. Nothing in that file runs — <code>tsc</code> is the test. If a union stops collapsing, if <code>handleError</code> stops subtracting, or if the sync/async dispatch picks the wrong branch, the build fails on the exact assertion that regressed.</p><div class="snippet">
+</div><p>In practice this comes up rarely: a chain is usually built and consumed in one expression, and <code>getResult()</code> hands you back an ordinary <code>Result</code>, which <em>is</em> exported and nameable.</p><h3 id="proving-inference">The inference rules are tested<a class="anchor" href="#proving-inference" aria-label="Link to The inference rules are tested">#</a></h3><p>The library ships 36 compile-time assertions in <code>tests/types.test-d.ts</code>, plus 6 calls that must <em>not</em> compile. Nothing in that file runs — <code>tsc</code> is the test. If a union stops collapsing, if <code>handleError</code> stops subtracting or starts accepting a class that is not in the union, or if the sync/async dispatch picks the wrong branch, the build fails on the exact assertion that regressed.</p><div class="snippet">
   <div class="snippet-head"><span class="snippet-lang">ts</span><span class="snippet-note">tests/types.test-d.ts — run with npm run typecheck</span></div>
   <pre><code data-lang="ts">type Equal&lt;X, Y&gt; =
   (&lt;T&gt;() =&gt; T extends X ? 1 : 2) extends &lt;T&gt;() =&gt; T extends Y ? 1 : 2 ? true : false;
@@ -1620,7 +1620,11 @@ const handled = registered(1).handleError(AError, (e) =&gt; Result.ok(e.limit));
 
 // a sync callback keeps the chain sync; an async one does not
 export type _tapSync = Expect&lt;Equal&lt;typeof tapped, Result&lt;string, AError | BError&gt;&gt;&gt;;
-const tapped = registered(1).tap(() =&gt; {});</code></pre>
+const tapped = registered(1).tap(() =&gt; {});
+
+// and the rejections are asserted too: a handler that cannot run must not compile
+// @ts-expect-error CError is not part of AError | BError
+registered(1).handleError(CError, () =&gt; Result.ok(0));</code></pre>
 </div>
         </section>
         <!-- ──────────────────────────────────────────────────────────── -->
@@ -1648,7 +1652,7 @@ const tapped = registered(1).tap(() =&gt; {});</code></pre>
   <pre><code data-lang="sh">npm run playground        # a runnable tour of every feature
 npm run playground:watch  # the same, re-running on save
 npm test                  # 156 runtime tests, 100% coverage
-npm run typecheck         # 35 compile-time inference assertions
+npm run typecheck         # 36 compile-time inference assertions
 npm run verify            # lint + typecheck + test + build</code></pre>
 </div>
         </section>
