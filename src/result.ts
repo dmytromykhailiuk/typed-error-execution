@@ -1,4 +1,4 @@
-import type { ErrorClass, RequireLiteralTag, Tagged } from "./types";
+import type { ErrorClass, HandleableClasses, RequireLiteralTag, Tagged } from "./types";
 
 /** Any `Result`, used as a constraint where the parameters do not matter. */
 export type AnyResult = Result<any, any>;
@@ -573,9 +573,16 @@ export class Result<T, E> {
    *   .handleError(NotFoundError, () => Result.ok(defaultUser))
    *   .handleError(TimeoutError, RateLimitError, (e) => Result.err(new RetryLater(e)));
    * ```
+   *
+   * Every class you name must still be in the union — handling one twice, or
+   * handling anything at all once the union is `never`, is a compile error
+   * rather than a step that quietly never runs. See {@link HandleableClass}.
    */
   handleError<Cs extends [ErrorClass, ...ErrorClass[]], R extends ResultLike>(
-    ...args: [...errorClasses: Cs, handler: (error: InstanceType<Cs[number]>) => R]
+    ...args: [
+      ...errorClasses: HandleableClasses<E, Cs>,
+      handler: (error: Extract<E, InstanceType<Cs[number]>>) => R,
+    ]
   ): Chain<R, T, Exclude<E, InstanceType<Cs[number]>>> {
     const handler = args[args.length - 1] as (error: unknown) => R;
     const classes = args.slice(0, -1) as unknown as Cs;
@@ -667,9 +674,15 @@ export class AsyncResult<T, E> {
   /**
    * Handles one or more specific error classes and removes exactly those from
    * the error union. The handler may be synchronous or asynchronous.
+   *
+   * As on {@link Result.handleError}, naming a class that is not in the union
+   * is a compile error.
    */
   handleError<Cs extends [ErrorClass, ...ErrorClass[]], R extends ResultLike>(
-    ...args: [...errorClasses: Cs, handler: (error: InstanceType<Cs[number]>) => R]
+    ...args: [
+      ...errorClasses: HandleableClasses<E, Cs>,
+      handler: (error: Extract<E, InstanceType<Cs[number]>>) => R,
+    ]
   ): AsyncResult<T | InferOk<R>, Exclude<E, InstanceType<Cs[number]>> | InferErr<R>> {
     const handler = args[args.length - 1] as (error: unknown) => R;
     const classes = args.slice(0, -1) as unknown as Cs;

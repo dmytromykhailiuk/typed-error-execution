@@ -28,6 +28,9 @@ describe("handleError", () => {
   it("leaves a non-matching error untouched", () => {
     const err = new ParseError("{");
     const handler = vi.fn(() => Result.ok("fallback"));
+    // Naming a class outside the union is a compile error — the runtime still
+    // has to pass the error through, because the union is only a claim.
+    // @ts-expect-error NotFoundError is not in the union
     const out = Result.err(err).handleError(NotFoundError, handler);
     expect(handler).not.toHaveBeenCalled();
     expect(out.error).toBe(err);
@@ -35,6 +38,7 @@ describe("handleError", () => {
 
   it("does not run on a success", () => {
     const handler = vi.fn(() => Result.ok("fallback"));
+    // @ts-expect-error an ok Result has no errors left to handle
     const out = Result.ok("original").handleError(NotFoundError, handler);
     expect(handler).not.toHaveBeenCalled();
     expect(out.value).toBe("original");
@@ -85,6 +89,7 @@ describe("handleError", () => {
     const second = vi.fn(() => Result.ok("second"));
     const out = Result.err(new ParseError())
       .handleError(ParseError, () => Result.err(new TimeoutError()))
+      // @ts-expect-error ParseError is gone from the union — the type says so too
       .handleError(ParseError, second);
 
     expect(second).not.toHaveBeenCalled();

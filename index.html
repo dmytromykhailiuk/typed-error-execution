@@ -923,7 +923,7 @@
               <li>
                 <a href="#handling">Handling errors</a>
                 <ol>
-                  <li><a href="#handling-rules">Three rules</a></li>
+                  <li><a href="#handling-rules">Four rules</a></li>
                 </ol>
               </li>
               <li>
@@ -1318,7 +1318,7 @@ const view = (await dashboard.getResult()).unwrap(); // safe, and the compiler k
   <div class="snippet-head"><span class="snippet-lang">ts</span></div>
   <pre><code data-lang="ts">loadRow(id).handleError(DatabaseUnavailable, (e) =&gt; Result.err(new ServiceDegraded(e)));
 // AsyncResult&lt;Row, RowNotFound | ServiceDegraded&gt;</code></pre>
-</div><h3 id="handling-rules">Three rules worth knowing<a class="anchor" href="#handling-rules" aria-label="Link to Three rules worth knowing">#</a></h3><div class="opts"><div class="opt"><div class="opt-name">Matching is instanceof<span class="opt-type">not tag comparison</span></div><div class="opt-body"><p>Handling a class also handles every subclass of it. One <code>handleError(PaymentDeclined, …)</code> covers <code>CardExpired</code>, <code>InsufficientFunds</code> and any other member of that family.</p></div></div><div class="opt"><div class="opt-name">A handler never sees its own output<span class="opt-type">no re-entry</span></div><div class="opt-body"><p>Converting <code>DatabaseUnavailable</code> into <code>ServiceDegraded</code> and handling <code>ServiceDegraded</code> later in the chain works exactly as written. There is no loop.</p></div></div><div class="opt"><div class="opt-name">The handler runs at most once<span class="opt-type">even with overlapping classes</span></div><div class="opt-body"><p>If you list both a class and its subclass and the instance matches both, the handler still runs a single time.</p></div></div></div><div class="snippet">
+</div><h3 id="handling-rules">Four rules worth knowing<a class="anchor" href="#handling-rules" aria-label="Link to Four rules worth knowing">#</a></h3><div class="opts"><div class="opt"><div class="opt-name">Matching is instanceof<span class="opt-type">not tag comparison</span></div><div class="opt-body"><p>Handling a class also handles every subclass of it. One <code>handleError(PaymentDeclined, …)</code> covers <code>CardExpired</code>, <code>InsufficientFunds</code> and any other member of that family.</p></div></div><div class="opt"><div class="opt-name">A handler never sees its own output<span class="opt-type">no re-entry</span></div><div class="opt-body"><p>Converting <code>DatabaseUnavailable</code> into <code>ServiceDegraded</code> and handling <code>ServiceDegraded</code> later in the chain works exactly as written. There is no loop.</p></div></div><div class="opt"><div class="opt-name">The handler runs at most once<span class="opt-type">even with overlapping classes</span></div><div class="opt-body"><p>If you list both a class and its subclass and the instance matches both, the handler still runs a single time.</p></div></div><div class="opt"><div class="opt-name">You can only name a class that is still there<span class="opt-type">a dead handler is a compile error</span></div><div class="opt-body"><p>Handling a class twice, naming one that was never in the union, or calling <code>handleError</code> at all once the union is <code>never</code> does not compile. A handler that provably cannot run is a mistake, not a no-op — the one exception is code generic over the error type, where the compiler cannot see what the union holds.</p></div></div></div><div class="snippet">
   <div class="snippet-head"><span class="snippet-lang">ts</span></div>
   <pre><code data-lang="ts">// instanceof matching: a subclass is handled by its parent's entry
 class CardExpired extends PaymentDeclined {}
@@ -1330,10 +1330,15 @@ Result.err(new CardExpired("exp_2019"))
 Result.err(new PaymentDeclined("do_not_honour"))
   .handleError(CardExpired, () =&gt; Result.ok(promptForNewCard())); // ✗ passes through
 
-// no re-entry: the second handler never fires
+// no re-entry: the second handler cannot fire — and no longer compiles,
+// because DatabaseUnavailable left the union with the first one
 Result.err(new DatabaseUnavailable("timeout"))
   .handleError(DatabaseUnavailable, (e) =&gt; Result.err(new ServiceDegraded(e)))
-  .handleError(DatabaseUnavailable, () =&gt; Result.ok(cached)); // unreachable</code></pre>
+  .handleError(DatabaseUnavailable, () =&gt; Result.ok(cached)); // ✗ ts error
+
+// same guard, once every failure is handled
+Result.ok(dashboard).handleError(UserNotFound, () =&gt; Result.ok(empty));
+// ✗ ts error: the error union is already `never`</code></pre>
 </div>
         </section>
         <!-- ──────────────────────────────────────────────────────────── -->
@@ -1412,7 +1417,7 @@ const response = form.match({
 });
 // → 422 { fields: [{ field: "password", reason: "too short" },
 //                  { field: "age", reason: "must be 18 or older" }] }</code></pre>
-</div><div class="table-wrap"><table><thead><tr><th></th><th><code>all</code></th><th><code>collect</code></th></tr></thead><tbody><tr><td>Value on success</td><td>tuple of values</td><td>tuple of values (identical)</td></tr><tr><td>Error on failure</td><td>the first failure</td><td>a tuple, <code>null</code> where it succeeded</td></tr><tr><td>Error type</td><td>a union of tagged failures</td><td>a tuple of <code>failure | null</code></td></tr><tr><td>Works with <code>handleError</code></td><td>yes</td><td><strong>no</strong> — the error is a tuple</td></tr><tr><td>Reach for it when</td><td>any failure means stop</td><td>the user must see every failure at once</td></tr></tbody></table></div><div class="note warn"><span class="note-label">Careful</span><p>Because the error is a tuple rather than a tagged failure, <code>handleError()</code> cannot match on it — <code>instanceof</code> against an array is never true, so a handler simply never fires. Read a collected failure with <code>match()</code> or <code>error</code> and turn it into whatever your API returns.</p></div><p>It follows the same dispatch rule as everything else, so a form whose checks hit the database — a uniqueness check, say — collects concurrently and still reports every field:</p><div class="snippet">
+</div><div class="table-wrap"><table><thead><tr><th></th><th><code>all</code></th><th><code>collect</code></th></tr></thead><tbody><tr><td>Value on success</td><td>tuple of values</td><td>tuple of values (identical)</td></tr><tr><td>Error on failure</td><td>the first failure</td><td>a tuple, <code>null</code> where it succeeded</td></tr><tr><td>Error type</td><td>a union of tagged failures</td><td>a tuple of <code>failure | null</code></td></tr><tr><td>Works with <code>handleError</code></td><td>yes</td><td><strong>no</strong> — the error is a tuple</td></tr><tr><td>Reach for it when</td><td>any failure means stop</td><td>the user must see every failure at once</td></tr></tbody></table></div><div class="note warn"><span class="note-label">Careful</span><p>Because the error is a tuple rather than a tagged failure, <code>handleError()</code> cannot match on it — no error class is in that union, so the call does not compile. Read a collected failure with <code>match()</code> or <code>error</code> and turn it into whatever your API returns.</p></div><p>It follows the same dispatch rule as everything else, so a form whose checks hit the database — a uniqueness check, say — collects concurrently and still reports every field:</p><div class="snippet">
   <div class="snippet-head"><span class="snippet-lang">ts</span></div>
   <pre><code data-lang="ts">const form = await Result.collect([
   validateEmailFormat(body.email),   // sync

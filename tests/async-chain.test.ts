@@ -140,7 +140,8 @@ describe("handleError on an async chain", () => {
   });
 
   it("handles several classes at once", async () => {
-    const r = await Result.err(new TimeoutError())
+    const source: Result<never, TimeoutError | ParseError> = Result.err(new TimeoutError());
+    const r = await source
       .toAsync()
       .handleError(TimeoutError, ParseError, (e) => Result.ok(`handled ${e._tag}`))
       .getResult();
@@ -150,6 +151,7 @@ describe("handleError on an async chain", () => {
   it("leaves a non-matching error alone", async () => {
     const err = new ParseError();
     const handler = vi.fn(() => Result.ok(0));
+    // @ts-expect-error TimeoutError is not in the union
     const r = await Result.err(err).toAsync().handleError(TimeoutError, handler).getResult();
     expect(handler).not.toHaveBeenCalled();
     expect(r.error).toBe(err);
@@ -157,6 +159,7 @@ describe("handleError on an async chain", () => {
 
   it("does not run on a success", async () => {
     const handler = vi.fn(() => Result.ok(0));
+    // @ts-expect-error an ok chain has no errors left to handle
     const r = await asyncOk("original").handleError(TimeoutError, handler).getResult();
     expect(handler).not.toHaveBeenCalled();
     expect(r.value).toBe("original");

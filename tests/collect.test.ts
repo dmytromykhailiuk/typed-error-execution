@@ -145,9 +145,9 @@ describe("Result.collect — interaction with the rest of the API", () => {
   });
 
   it("cannot be matched by handleError, because the error is a tuple", () => {
-    const out = Result.collect([Result.err(err), Result.ok(1)]).handleError(ParseError, () =>
-      Result.ok(["recovered"] as unknown as [never, number]),
-    );
+    const out = Result.collect([Result.err(err), Result.ok(1)])
+      // @ts-expect-error the error is a tuple, so no error class can be in the union
+      .handleError(ParseError, () => Result.ok(["recovered"] as unknown as [never, number]));
     // The handler never fires: the error is an array, not a ParseError instance.
     expect(out.isErr).toBe(true);
     expect(out.error).toEqual([err, null]);

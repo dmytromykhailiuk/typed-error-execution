@@ -143,6 +143,37 @@ registered(1).handleError(AError, (e) => {
   return Result.ok(limit);
 });
 
+// ── handleError rejects a class that cannot be in the union ──────────────
+// A class that was never in it.
+// @ts-expect-error CError is not part of AError | BError
+registered(1).handleError(CError, () => Result.ok(0));
+
+// A class already subtracted by an earlier call.
+registered(1)
+  .handleError(AError, () => Result.ok(0))
+  // @ts-expect-error AError is gone from the union
+  .handleError(AError, () => Result.ok(0));
+
+// Nothing at all, once the union is `never`.
+// @ts-expect-error an ok Result has no errors to handle
+Result.ok(1).handleError(AError, () => Result.ok(0));
+
+// The offending class is rejected on its own, not the whole call.
+// @ts-expect-error CError is not part of AError | BError
+registered(1).handleError(AError, CError, () => Result.ok(0));
+
+// The same guard applies to an asynchronous chain.
+// @ts-expect-error BError is not part of AError
+registeredAsync("x").handleError(BError, () => Result.ok(0));
+
+// A base class still names a union member that subclasses it, because matching
+// is `instanceof`.
+class SubAError extends AError {}
+export type _handleSubclass = Expect<Equal<typeof handledSubclass, Result<number, never>>>;
+const handledSubclass = Result.err<SubAError>(new SubAError(1)).handleError(AError, (e) =>
+  Result.ok(e.limit),
+);
+
 // ── tap keeps both types, but an async effect turns the chain async ──────
 export type _tapSync = Expect<Equal<typeof tapped, Result<string, AError | BError>>>;
 const tapped = registered(1).tap(() => {});
@@ -237,6 +268,7 @@ export const _bindings = [
   handledMulti,
   handledIntroduces,
   handledAsync,
+  handledSubclass,
   tapped,
   tappedAsync,
   triedSync,

@@ -33,12 +33,14 @@ describe("an async callback upgrades a skipped step to a real chain", () => {
   });
 
   it("handleError with no matching class", async () => {
+    // @ts-expect-error TimeoutError is not in the union — the runtime still skips
     const chain = Result.err(err).handleError(TimeoutError, async () => Result.ok(0));
     expect(chain).not.toBeInstanceOf(Result);
     expect((await chain.getResult()).error).toBe(err);
   });
 
   it("handleError on a success", async () => {
+    // @ts-expect-error an ok Result has no errors left to handle
     const chain = Result.ok("original").handleError(TimeoutError, async () => Result.ok("x"));
     expect(chain).not.toBeInstanceOf(Result);
     expect((await chain.getResult()).value).toBe("original");

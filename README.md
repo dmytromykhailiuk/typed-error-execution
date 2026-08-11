@@ -447,11 +447,25 @@ loadRow(id).handleError(DatabaseUnavailable, (e) =>
 // AsyncResult<Row, RowNotFound | ServiceDegraded>
 ```
 
-Three properties worth knowing:
+Four properties worth knowing:
 
 - **Matching is** `instanceof`, so handling a class also handles its subclasses.
 - **A handler never sees its own output.** Converting `A` into `B` and then handling `B` later in the chain works exactly as written; there is no re-entry.
 - **The handler runs at most once**, even if several of the listed classes match the same instance.
+- **Every class you name must still be in the union.** Handling something the `Result` cannot be carrying is a compile error, not a step that silently never runs:
+
+```ts
+const dashboard = loadDashboard(userId).handleError(UserNotFound, () =>
+  Result.ok(emptyDashboard)
+);
+// AsyncResult<Dashboard, SubscriptionRequired | DatabaseUnavailable>
+
+dashboard.handleError(UserNotFound, handler); // ✗ already handled — not in the union
+dashboard.handleError(ParseError, handler); //   ✗ never was in the union
+Result.ok(1).handleError(UserNotFound, handler); // ✗ the union is `never`
+```
+
+A base class still names a union member that subclasses it, because matching is `instanceof` — `handleError(PaymentDeclined, …)` type-checks on a `Result` whose error is `CardExpired`. The one place the guard is stricter than the runtime is code that is generic over the error type: inside `<E>(r: Result<T, E>) => …` the compiler cannot see what `E` contains, so name a concrete union in the signature instead.
 
 ---
 
@@ -589,7 +603,7 @@ The index is the point: you know _which_ field failed, not merely that one did.
 | Works with `handleError` | yes                      | **no** — the error is a tuple      |
 | Reach for it when        | any failure means stop   | you must report every failure      |
 
-> Because the error is a tuple rather than a tagged error, `handleError()` cannot match on it — `instanceof` against an array is never true, so a handler simply never fires. Read a collected failure with `match()` or `error`.
+> Because the error is a tuple rather than a tagged error, `handleError()` cannot match on it — no error class is in that union, so the call does not compile. Read a collected failure with `match()` or `error`.
 
 ```ts
 const form = await Result.collect([
