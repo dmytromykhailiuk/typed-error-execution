@@ -42,19 +42,17 @@ const registerUser = Result.registerExecution(async (input: SignUpInput) => {
 });
 // (input: SignUpInput) => AsyncResult<User, ValidationFailed | EmailAlreadyRegistered>
 
-const settled = await registerUser(req.body).getResult();
+const settled = await registerUser(req.body)
+  .mapValue((user) => Result.ok({ status: 201, body: publicProfile(user) }))
+  .handleError(ValidationFailed, (e) =>
+    Result.ok({ status: 422, body: { field: e.field, reason: e.reason } })
+  )
+  .handleError(EmailAlreadyRegistered, () =>
+    Result.ok({ status: 409, body: { error: "that email is already in use" } })
+  )
+  .getResult(); // Result<Response, never> — every failure is now a response
 
-const response = settled.match({
-  ok: (user) => ({ status: 201, body: publicProfile(user) }),
-  err: (e) => {
-    switch (e._tag) {
-      case "ValidationFailed":
-        return { status: 422, body: { field: e.field, reason: e.reason } };
-      case "EmailAlreadyRegistered":
-        return { status: 409, body: { error: "that email is already in use" } };
-    }
-  },
-});
+const response = settled.unwrap(); // safe, and the compiler knows it
 ```
 
 ---
@@ -640,23 +638,23 @@ settled.match({ ok: (u) => u.name, err: (e) => e._tag }); // and every other ter
 `match` is the exhaustive one — you cannot forget a branch:
 
 ```ts
-const charge = await chargeSubscription(userId, 4900).getResult();
+// handleError collapses the union to the one failure this boundary reports…
+const charge = await chargeSubscription(userId, 4900)
+  .handleError(UserNotFound, () =>
+    Result.err(new CheckoutFailed(404, "no such user"))
+  )
+  .handleError(NoPaymentMethod, () =>
+    Result.err(new CheckoutFailed(402, "add a card first"))
+  )
+  .handleError(PaymentDeclined, (e) =>
+    Result.err(new CheckoutFailed(402, `declined: ${e.failureCode}`))
+  )
+  .getResult(); // Result<Charge, CheckoutFailed>
 
+// …and match reads both branches, with nothing left to dispatch on.
 const response = charge.match({
   ok: (charge) => ({ status: 200, body: { receiptUrl: charge.receiptUrl } }),
-  err: (e) => {
-    switch (e._tag) {
-      case "UserNotFound":
-        return { status: 404, body: { error: "no such user" } };
-      case "NoPaymentMethod":
-        return { status: 402, body: { error: "add a card first" } };
-      case "PaymentDeclined":
-        return {
-          status: 402,
-          body: { error: "declined", code: e.failureCode },
-        };
-    }
-  },
+  err: (e) => ({ status: e.status, body: { error: e.reason } }),
 });
 ```
 
@@ -728,55 +726,53 @@ The mirror direction — going back to exceptions at the edge of your typed core
 
 ```ts
 app.get("/api/orders/:id", async (req, res) => {
-  const loaded = await loadOrder(req.params.id, req.user.id).getResult();
+  const settled = await loadOrder(req.params.id, req.user.id)
+    .mapValue((order) => Result.ok({ status: 200, headers: {}, body: order }))
+    .handleError(OrderNotFound, () =>
+      Result.ok({ status: 404, headers: {}, body: { error: "not found" } })
+    )
+    .handleError(NotYourOrder, () =>
+      Result.ok({ status: 403, headers: {}, body: { error: "forbidden" } })
+    )
+    .handleError(RateLimited, (e) =>
+      Result.ok({
+        status: 429,
+        headers: { "Retry-After": String(e.retryAfterSeconds) },
+        body: { error: "slow down" },
+      })
+    )
+    .handleError(DatabaseUnavailable, (e) => {
+      logger.error({ err: e }, "order lookup failed"); // a real Error: has a stack
+      return Result.ok({
+        status: 503,
+        headers: {},
+        body: { error: "try again shortly" },
+      });
+    })
+    .getResult(); // Result<Response, never>
 
-  const response = loaded.match({
-    ok: (order) => ({ status: 200, headers: {}, body: order }),
-    err: (e) => {
-      switch (e._tag) {
-        case "OrderNotFound":
-          return { status: 404, headers: {}, body: { error: "not found" } };
-        case "NotYourOrder":
-          return { status: 403, headers: {}, body: { error: "forbidden" } };
-        case "RateLimited":
-          return {
-            status: 429,
-            headers: { "Retry-After": String(e.retryAfterSeconds) },
-            body: { error: "slow down" },
-          };
-        case "DatabaseUnavailable":
-          logger.error({ err: e }, "order lookup failed"); // a real Error: has a stack
-          return {
-            status: 503,
-            headers: {},
-            body: { error: "try again shortly" },
-          };
-      }
-    },
-  });
-
+  const response = settled.unwrap(); // safe: nothing is left in the union
   res.status(response.status).set(response.headers).json(response.body);
 });
 ```
 
-Because `_tag` is a literal, the `switch` narrows `e` in every branch — `e.reason` is available only where it exists.
+Each handler receives exactly the classes it named — `e.retryAfterSeconds` is available only where it exists — and the union arriving at `never` is the proof that every failure got a status code.
 
 ### Exhaustiveness at the boundary
 
+Pin the handled chain to `never`. A chain that still carries a failure is not assignable to it, so a fourth failure upstream breaks this line rather than production:
+
 ```ts
-const toStatus = (e: OrderNotFound | NotYourOrder | RateLimited): number => {
-  switch (e._tag) {
-    case "OrderNotFound":
-      return 404;
-    case "NotYourOrder":
-      return 403;
-    case "RateLimited":
-      return 429;
-    default: {
-      const _exhaustive: never = e; // ← breaks when a fourth failure is added
-      return 500;
-    }
-  }
+const respond = (
+  loaded: Result<Order, OrderNotFound | NotYourOrder | RateLimited>
+) => {
+  const handled: Result<HttpResponse, never> = loaded
+    .mapValue((order) => Result.ok(ok200(order)))
+    .handleError(OrderNotFound, () => Result.ok(status(404, "not found")))
+    .handleError(NotYourOrder, () => Result.ok(status(403, "forbidden")))
+    .handleError(RateLimited, (e) => Result.ok(retryAfter(e.retryAfterSeconds)));
+
+  return handled.unwrap();
 };
 ```
 
