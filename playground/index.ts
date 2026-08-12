@@ -27,9 +27,7 @@ const res2 = getFromDb(-1)
 
 const res3 = getFromDb(-1).mapValue((value) => Result.ok(value ** 2));
 
-const res4 = Result.err(new NotFoundError()).mapValue(() =>
-  Promise.resolve(Result.ok(2))
-);
+const res4 = Result.err(new NotFoundError()).mapValue(() => Promise.resolve(Result.ok(2)));
 
 const res5 = Result.all([Result.ok(true), Result.ok(5), Result.ok("4")]);
 
@@ -48,9 +46,7 @@ const resTest = Result.registerExecution(() => {
   }
 })();
 
-const resTest2 = resTest.handleError(Random1Error, Random2Error, () =>
-  Result.ok(1)
-);
+const resTest2 = resTest.handleError(Random1Error, Random2Error, () => Result.ok(1));
 
 const resTest3 = resTest2.mapError(() => Result.ok(true));
 

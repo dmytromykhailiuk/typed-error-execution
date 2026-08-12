@@ -265,6 +265,42 @@ export class Result<T, E> {
     }
   }
 
+  /**
+   * Lifts a throwing function once, into a function that returns a `Result`.
+   *
+   * Same conversion as {@link Result.try}, but it wraps instead of runs: you
+   * name the throwing call and the error it becomes one time, at the boundary
+   * of your typed code, and every call site afterwards is ordinary. Arguments
+   * and the sync/async rule pass straight through.
+   *
+   * ```ts
+   * const parseJson = Result.fromThrowable(
+   *   (raw: string) => JSON.parse(raw) as Config,
+   *   (thrown) => new ParseError(String(thrown)),
+   * );
+   * // (raw: string) => Result<Config, ParseError>
+   *
+   * const fetchUser = Result.fromThrowable(
+   *   (id: string) => sdk.users.get(id),
+   *   (thrown) => new SdkError(String(thrown)),
+   * );
+   * // (id: string) => AsyncResult<User, SdkError>
+   * ```
+   *
+   * Annotate what the throwing call returns, as above. Handing over a function
+   * typed `any` — `Result.fromThrowable(JSON.parse, …)` — leaves the compiler
+   * no way to tell a promise from a value, and it errs towards the asynchronous
+   * type, which is the safe direction but not the one you want here.
+   */
+  static fromThrowable<A extends any[], T, E extends Tagged>(
+    fn: (...args: A) => T,
+    onThrow: (thrown: unknown) => E & RequireLiteralTag<E>,
+  ): (...args: A) => IsPromise<T> extends true ? AsyncResult<Awaited<T>, E> : Result<T, E> {
+    // Instantiated explicitly: inferring `E` again here would re-apply the
+    // literal-tag guard to a type that already carries it.
+    return (...args: A) => Result.try<T, E>(() => fn(...args), onThrow);
+  }
+
   // ── registration ──────────────────────────────────────────────────────
 
   /**

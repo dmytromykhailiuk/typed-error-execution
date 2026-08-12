@@ -244,7 +244,7 @@ The check is `instanceof` on what came back — there are no heuristics applied 
 | --------------------------------------- | ----------------------------- | ----------------------------------------------- |
 | `mapValue` · `mapError` · `handleError` | the callback returns a result | it returns a promise or an async chain          |
 | `tap` · `tapError`                      | the effect returns nothing    | the effect returns a promise (which is awaited) |
-| `Result.try`                            | the body returns a value      | the body returns a promise                      |
+| `Result.try` · `Result.fromThrowable`   | the body returns a value      | the body returns a promise                      |
 | `Result.registerExecution`              | the body returns a result     | the body is `async`                             |
 | `Result.all` · `Result.collect`         | every member is synchronous   | any member is asynchronous                      |
 
@@ -694,6 +694,10 @@ try {
 
 ## Bridging code that throws
 
+This is the boundary between the throwing world — every SDK you did not write — and the typed one. Two entry points cross it: `try` runs the throwing call now, `fromThrowable` hands you a function that does.
+
+### try — run it now
+
 `Result.try` runs a function and converts anything it throws into a tagged error — and, like everything else, it follows the dispatch rule:
 
 ```ts
@@ -715,6 +719,29 @@ const event = Result.try(
 On the asynchronous path it catches both a synchronous throw and a rejected promise.
 
 `onThrow` receives the thrown value as `unknown` — JavaScript does not guarantee it is an `Error`, and pretending otherwise is how `e.message` becomes `undefined` in production.
+
+### fromThrowable — convert once, call anywhere
+
+`Result.fromThrowable` is the same conversion, lifted: it **wraps** the function instead of running it. The throwing call and the failure it becomes are named one time, at the boundary; every call site afterwards is ordinary. Arguments and the dispatch rule pass straight through.
+
+```ts
+const parseJson = Result.fromThrowable(
+  (raw: string) => JSON.parse(raw) as StripeEvent,
+  (thrown) => new MalformedWebhook(String(thrown))
+);
+// (raw: string) => Result<StripeEvent, MalformedWebhook>
+
+parseJson(rawBody).mapValue((event) => handle(event)); // no try in sight
+
+const charge = Result.fromThrowable(
+  (amount: number, customer: string) =>
+    stripe.charges.create({ amount, customer }),
+  (thrown) => new PaymentGatewayError(String(thrown))
+);
+// (amount: number, customer: string) => AsyncResult<Charge, PaymentGatewayError>
+```
+
+> **Annotate what the throwing call returns.** Handing over a function typed `any` — `Result.fromThrowable(JSON.parse, …)` — leaves the compiler no way to tell a promise from a value, so it errs towards the asynchronous type. That is the safe direction, but not the one you want for `JSON.parse`: wrap it in an arrow with a return type, as above.
 
 The mirror direction — going back to exceptions at the edge of your typed core — is `unwrap()`, or an explicit `throw` inside `match`.
 
@@ -859,6 +886,7 @@ In practice this comes up rarely: the chain is usually built and consumed in one
 | `empty(): Result<null, never>`    | Success carrying `null`.                                                                                  |
 | `err<E>(error): Result<never, E>` | Failure carrying a tagged error.                                                                          |
 | `try(fn, onThrow)`                | Runs `fn`, converting a throw — or a rejection — into a tagged error. Async when `fn` returns a promise.  |
+| `fromThrowable(fn, onThrow)`      | The same conversion, wrapped instead of run: returns `(...args) => Result<T, E>`.                         |
 | `registerExecution(fn)`           | Collapses a union of results into a result of unions. Async when the body is.                             |
 | `all(results)`                    | Tuple of results → result of a tuple. First error wins. Async if any member is; members run concurrently. |
 | `collect(results)`                | Same values, but the error is a **tuple** of every member's error with `null` where it succeeded.         |

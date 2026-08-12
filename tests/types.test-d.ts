@@ -194,6 +194,30 @@ const triedAsync = Result.try(
   () => new CError(),
 );
 
+// ── fromThrowable is try, lifted: the arguments and the rule both survive ─
+export type _fromThrowable = Expect<
+  Equal<typeof lifted, (raw: string, radix: number) => Result<number, CError>>
+>;
+const lifted = Result.fromThrowable(
+  (raw: string, radix: number) => Number.parseInt(raw, radix),
+  () => new CError(),
+);
+
+export type _fromThrowableAsync = Expect<
+  Equal<typeof liftedAsync, (id: string) => AsyncOf<{ id: string }, CError>>
+>;
+const liftedAsync = Result.fromThrowable(
+  async (id: string) => ({ id }),
+  () => new CError(),
+);
+
+// A widened `_tag` is rejected here exactly as it is by `err` and `try`.
+Result.fromThrowable(
+  (n: number) => n,
+  // @ts-expect-error _tag widened to `string`
+  () => new Widened(),
+);
+
 // ── all() builds a tuple, and goes async if any member is ────────────────
 export type _all = Expect<Equal<typeof combined, Result<[string, string], AError | BError>>>;
 const combined = Result.all([registered(1), registered(2)]);
@@ -273,6 +297,8 @@ export const _bindings = [
   tappedAsync,
   triedSync,
   triedAsync,
+  lifted,
+  liftedAsync,
   combined,
   combinedAsync,
   combinedEmpty,
