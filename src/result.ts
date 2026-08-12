@@ -1,4 +1,11 @@
-import type { ErrorClass, HandleableClasses, RequireLiteralTag, Tagged } from "./types";
+import type {
+  ErrorClass,
+  HandleableClasses,
+  MatchedBy,
+  RequireLiteralTag,
+  Tagged,
+  UnmatchedBy,
+} from "./types";
 
 /** Any `Result`, used as a constraint where the parameters do not matter. */
 export type AnyResult = Result<any, any>;
@@ -601,7 +608,8 @@ export class Result<T, E> {
    * the error union. Everything else flows on untouched.
    *
    * Pass the error classes first and the handler last. Matching is
-   * `instanceof`, so a subclass of a listed class is handled too. An
+   * `instanceof`, so a subclass of a listed class is handled too — including a
+   * whole family built with `Tagged(tag, Parent)`, at any depth. An
    * asynchronous handler turns the chain asynchronous.
    *
    * ```ts
@@ -617,9 +625,9 @@ export class Result<T, E> {
   handleError<Cs extends [ErrorClass, ...ErrorClass[]], R extends ResultLike>(
     ...args: [
       ...errorClasses: HandleableClasses<E, Cs>,
-      handler: (error: Extract<E, InstanceType<Cs[number]>>) => R,
+      handler: (error: MatchedBy<E, Cs[number]>) => R,
     ]
-  ): Chain<R, T, Exclude<E, InstanceType<Cs[number]>>> {
+  ): Chain<R, T, UnmatchedBy<E, Cs[number]>> {
     const handler = args[args.length - 1] as (error: unknown) => R;
     const classes = args.slice(0, -1) as unknown as Cs;
     if (this._isOk || !classes.some((c) => this._error instanceof c)) {
@@ -717,9 +725,9 @@ export class AsyncResult<T, E> {
   handleError<Cs extends [ErrorClass, ...ErrorClass[]], R extends ResultLike>(
     ...args: [
       ...errorClasses: HandleableClasses<E, Cs>,
-      handler: (error: Extract<E, InstanceType<Cs[number]>>) => R,
+      handler: (error: MatchedBy<E, Cs[number]>) => R,
     ]
-  ): AsyncResult<T | InferOk<R>, Exclude<E, InstanceType<Cs[number]>> | InferErr<R>> {
+  ): AsyncResult<T | InferOk<R>, UnmatchedBy<E, Cs[number]> | InferErr<R>> {
     const handler = args[args.length - 1] as (error: unknown) => R;
     const classes = args.slice(0, -1) as unknown as Cs;
     return new AsyncResult(

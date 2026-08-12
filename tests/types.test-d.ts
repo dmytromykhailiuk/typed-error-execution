@@ -8,7 +8,8 @@
  * `AsyncResult` is not exported, so it is named here the only way users can
  * name it: by inferring it back out of a chain that turned asynchronous.
  */
-import { Result, Tagged } from "../src";
+import { InvalidBrand, Result, Tagged, TaggedError, brand } from "../src";
+import type { BrandOf, Branded } from "../src";
 
 type Equal<X, Y> = (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y ? 1 : 2
   ? true
@@ -173,6 +174,129 @@ export type _handleSubclass = Expect<Equal<typeof handledSubclass, Result<number
 const handledSubclass = Result.err<SubAError>(new SubAError(1)).handleError(AError, (e) =>
   Result.ok(e.limit),
 );
+
+// ── families: Tagged(tag, Parent) ────────────────────────────────────────
+class FamilyError extends Tagged("FamilyError") {}
+class BranchError extends Tagged("Branch", FamilyError) {}
+class LeafError extends Tagged("Leaf", BranchError) {}
+class OtherBranchError extends Tagged("OtherBranch", FamilyError) {}
+
+// Each level composes its path, and each level is its own type.
+export type _familyRootTag = Expect<Equal<FamilyError["_tag"], "FamilyError">>;
+export type _familyBranchTag = Expect<Equal<BranchError["_tag"], "FamilyError.Branch">>;
+export type _familyLeafTag = Expect<Equal<LeafError["_tag"], "FamilyError.Branch.Leaf">>;
+
+// The bug this exists to kill: two children must not collapse into one member.
+const family = Result.registerExecution((n: number) => {
+  if (n > 1) return Result.ok(n);
+  if (n > 0) return Result.err(new BranchError());
+  return Result.err(new OtherBranchError());
+});
+export type _familyUnionKeeps = Expect<
+  Equal<ReturnType<typeof family>, Result<number, BranchError | OtherBranchError>>
+>;
+
+// An ancestor subtracts every descendant, at any depth.
+export type _familyRootHandles = Expect<Equal<typeof handledByRoot, Result<number | 0, never>>>;
+const handledByRoot = family(1).handleError(FamilyError, () => Result.ok(0));
+
+export type _familyRootHandlesDepth = Expect<
+  Equal<typeof handledDeep, Result<number | 0, OtherBranchError>>
+>;
+const handledDeep = Result.registerExecution((n: number) =>
+  n > 0 ? Result.err(new LeafError()) : Result.err(new OtherBranchError()),
+)(1)
+  .mapValue(() => Result.ok(1))
+  .handleError(BranchError, () => Result.ok(0));
+
+// A branch leaves its sibling behind.
+export type _familyBranchHandles = Expect<
+  Equal<typeof handledByBranch, Result<number | 0, OtherBranchError>>
+>;
+const handledByBranch = family(1).handleError(BranchError, () => Result.ok(0));
+
+// The handler sees exactly the matched members.
+family(1).handleError(BranchError, (e) => {
+  const tag: "FamilyError.Branch" = e._tag;
+  return Result.ok(tag);
+});
+
+// A descendant is not in a union that only holds its ancestor.
+// @ts-expect-error LeafError is below BranchError, so it cannot be in the union
+family(1).handleError(LeafError, () => Result.ok(0));
+
+// An unrelated family matches nothing.
+// @ts-expect-error AError is not part of this family
+family(1).handleError(AError, () => Result.ok(0));
+
+// A dot may not be written by hand — the factory composes the path.
+// @ts-expect-error a tag may not contain `.`
+class FakedLineage extends Tagged("FamilyError.Faked") {}
+export type _fakedLineage = FakedLineage;
+
+// The same rules hold for an Error-rooted family.
+class InfraError extends TaggedError("Infra") {}
+class DatabaseDown extends TaggedError("DatabaseDown", InfraError) {}
+export type _errorFamilyTag = Expect<Equal<DatabaseDown["_tag"], "Infra.DatabaseDown">>;
+export type _errorFamilyIsError = Expect<DatabaseDown extends Error ? true : false>;
+export type _errorFamilyHandled = Expect<Equal<typeof handledInfra, Result<string, never>>>;
+const handledInfra = Result.err(new DatabaseDown("pool")).handleError(InfraError, (e) =>
+  Result.ok(e.message),
+);
+
+// ── brands label a base type without changing it ─────────────────────────
+const UserId = brand("userId");
+type UserId = BrandOf<typeof UserId>;
+export type _brandOf = Expect<Equal<UserId, Branded<string, "userId">>>;
+export type _brandName = Expect<Equal<typeof UserId.brandName, "userId">>;
+
+const OrderId = brand("orderId");
+type OrderId = BrandOf<typeof OrderId>;
+
+// The base type comes from the predicate, or is given explicitly.
+const PositiveNumber = brand("positive", (n: number) => n > 0);
+export type _brandFromPredicate = Expect<
+  Equal<BrandOf<typeof PositiveNumber>, Branded<number, "positive">>
+>;
+const OrderNo = brand<"orderNo", number>("orderNo");
+export type _brandExplicitBase = Expect<Equal<BrandOf<typeof OrderNo>, Branded<number, "orderNo">>>;
+
+// A branded value is still its base type, and keeps the base's members.
+declare const userId: UserId;
+export type _brandIsBase = Expect<UserId extends string ? true : false>;
+export const _brandBaseMembers: string = userId.toUpperCase();
+
+// …but nothing else is a UserId.
+declare function loadUser(id: UserId): void;
+loadUser(UserId("u_1"));
+// @ts-expect-error a raw string is not a UserId
+loadUser("u_1");
+declare const orderId: OrderId;
+// @ts-expect-error another brand is not a UserId
+loadUser(orderId);
+
+// Without a predicate there is nothing to check, so there is no checker.
+// @ts-expect-error `is` exists only on a checked brand
+UserId.is("u_1");
+// @ts-expect-error `safe` exists only on a checked brand
+UserId.safe("u_1");
+
+// A checked brand narrows, and its safe() is an ordinary Result.
+declare const unknownValue: unknown;
+export const _brandGuard = PositiveNumber.is(unknownValue) ? unknownValue : null;
+export type _brandGuardNarrows = Expect<
+  Equal<typeof _brandGuard, Branded<number, "positive"> | null>
+>;
+export type _brandSafe = Expect<
+  Equal<ReturnType<typeof PositiveNumber.safe>, Result<Branded<number, "positive">, InvalidBrand>>
+>;
+
+// The error is tagged, so a chain can subtract it like any other — and the
+// branded value survives the chain unchanged.
+export type _brandSafeHandled = Expect<
+  Equal<typeof brandHandled, Result<number | Branded<number, "positive">, never>>
+>;
+const brandHandled = PositiveNumber.safe(1).handleError(InvalidBrand, () => Result.ok(0));
 
 // ── tap keeps both types, but an async effect turns the chain async ──────
 export type _tapSync = Expect<Equal<typeof tapped, Result<string, AError | BError>>>;

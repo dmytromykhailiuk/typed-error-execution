@@ -6,7 +6,7 @@
 
 A `Result<T, E>` either succeeded with a `T` or failed with one of the tagged errors in `E`. Errors are ordinary classes carrying a literal `_tag`, so TypeScript tracks exactly which failures a call can still produce — and `handleError()` removes them from that union one at a time until nothing is left.
 
-Inspired by [Effect](https://effect.website/) and [neverthrow](https://github.com/supermacro/neverthrow), but deliberately small: **four exports**, one API for sync and async, no generators, no runtime, no fibers. Zero dependencies.
+Inspired by [Effect](https://effect.website/) and [neverthrow](https://github.com/supermacro/neverthrow), but deliberately small: **a handful of exports**, one API for sync and async, no generators, no runtime, no fibers. Zero dependencies.
 
 ```ts
 import {
@@ -62,6 +62,7 @@ const response = settled.unwrap(); // safe, and the compiler knows it
 - [Install](#install)
 - [Why](#why)
 - [Defining errors](#defining-errors)
+- [Branding values](#branding-values)
 - [Creating results](#creating-results)
 - [One method, sync or async](#one-method-sync-or-async)
 - [Registering executions](#registering-executions)
@@ -88,14 +89,18 @@ npm i @dmytromykhailiuk/typed-error-execution
 
 No peer dependencies. TypeScript **5.0+** is required (the `const` type parameters used by `all()` landed in 5.0). ESM and CJS builds are both published, with separate `.d.ts` / `.d.cts` declarations.
 
-### Four exports, and that is all
+### The whole surface
 
 ```ts
 import {
   Result, // the type, and every static that builds or combines one
-  Tagged, // base class factory for domain errors
+  Tagged, // base class factory for domain errors, and for families of them
   TaggedError, // the same, but extending the native Error
   ResultUnwrapError, // what unwrap() throws
+  brand, // labels for values that must not be interchangeable
+  InvalidBrand, // what a checked brand reports
+  type Branded, // the same label, as a type
+  type BrandOf, // the type a brand() factory produces
 } from "@dmytromykhailiuk/typed-error-execution";
 ```
 
@@ -181,9 +186,109 @@ logger.error({ err }, "query failed"); // serialises like any other Error
 
 Capturing a stack trace is by far the most expensive part of creating an error. If a failure is an ordinary control-flow outcome — "this user does not exist" — `Tagged` keeps it as cheap as returning a value, which is what it is.
 
-> **Each call to** `Tagged()` **returns a distinct class.** Two error types that happen to share a tag string are still separate under `instanceof`, so `handleError` will not confuse them.
+> **Each call to** `Tagged()` **returns a distinct class.** Two error types that happen to share a tag string are still separate under `instanceof`, so `handleError` will not confuse them at runtime. In the type system they are indistinguishable — nothing tells two identical shapes apart — so give each failure its own tag.
 
-> **Subclasses inherit the parent's tag.** `class CardExpired extends PaymentDeclined {}` has `_tag === "PaymentDeclined"`. Because matching is `instanceof`, handling `PaymentDeclined` also handles `CardExpired` — usually what you want for a family of related failures. Give the subclass its own `Tagged("CardExpired")` base when the two must be told apart in a `switch`.
+### Error inheritance
+
+Errors inherit from one another: pass the parent class as the second argument. A class and everything below it form a **family**. The tag becomes a dotted path, and that path is what carries the lineage into the type system.
+
+```ts
+class PaymentError extends Tagged("PaymentError") {}
+class Declined extends Tagged("Declined", PaymentError) {}
+class CardExpired extends Tagged("CardExpired", Declined) {}
+class Rejected extends Tagged("Rejected", PaymentError) {}
+
+new CardExpired()._tag; // "PaymentError.Declined.CardExpired"
+new CardExpired() instanceof PaymentError; // true
+```
+
+`handleError` handles a class **and everything below it**, at any depth:
+
+| Handled class    | Also handles                                | Leaves        |
+| ---------------- | ------------------------------------------- | ------------- |
+| `PaymentError`   | `Declined`, `CardExpired`, `Rejected`       | —             |
+| `Declined`       | `CardExpired`                               | `Rejected`    |
+| `CardExpired`    | —                                           | `Rejected`    |
+
+```ts
+charge(order) // AsyncResult<Receipt, CardExpired | Rejected>
+  .handleError(Declined, (e) => Result.ok(retry(e))) // CardExpired too
+  .handleError(Rejected, () => Result.ok(abandon()));
+// AsyncResult<Receipt, never>
+```
+
+Nesting is unlimited, and each level is a **distinct type**. That is the whole reason the second argument exists — a plain `class Child extends Parent {}` adds nothing, so it is structurally identical to its parent, and TypeScript collapses `Child1 | Child2` into one member. The error union then silently stops tracking which failure it is holding:
+
+```ts
+class Random1Error extends RandomError {} // ✗ same type as RandomError
+class Random2Error extends RandomError {} // ✗ same type again
+// Result<number, Random1Error | Random2Error>  →  Result<number, Random1Error>
+
+class Random1Error extends Tagged("Random1Error", RandomError) {} // ✓ its own type
+class Random2Error extends Tagged("Random2Error", RandomError) {} // ✓ its own type
+```
+
+A plain `extends` still behaves exactly as it always did — the child inherits the parent's tag and is handled by it — so nothing that already works breaks. It just cannot tell two children apart.
+
+> **A tag may not contain a dot.** The dot separates the levels of a family and `Tagged(tag, Parent)` composes it for you. Writing `Tagged("PaymentError.Faked")` by hand is a compile error, because it would claim a lineage that `instanceof` does not back.
+
+`TaggedError` takes the same second argument, and `name` follows the composed path so a report says which member it was. `Error` can only enter a chain at its root: build the family with `TaggedError` at the top, and every level below is a real `Error` — including levels declared with plain `Tagged(tag, Parent)`.
+
+---
+
+## Branding values
+
+The same idea as a tagged error, applied to ordinary values: a label that exists only in the type, so two things that are the same underneath stop being interchangeable.
+
+```ts
+type UserId = Branded<string, "userId">;
+type OrderId = Branded<string, "orderId">;
+
+declare function loadUser(id: UserId): User;
+
+loadUser(orderId); // ✗ the wrong id no longer compiles
+```
+
+`brand()` is the same thing as a factory, so the name is written once and you get a constructor with it:
+
+```ts
+const UserId = brand("userId");
+type UserId = BrandOf<typeof UserId>; // Branded<string, "userId">
+
+loadUser(UserId("u_1")); // ✓
+loadUser("u_1"); //         ✗ a raw string is not a UserId
+```
+
+The base type is `string` unless you say otherwise — `brand<"orderNo", number>("orderNo")`, or by handing over a predicate, which is where it is normally inferred from.
+
+A branded value **is** its base type, so it goes anywhere a `string` is expected and keeps every method. Only the other direction is blocked, which is the whole point — there is nothing to unwrap.
+
+### Checked brands
+
+Give `brand()` a predicate and the label starts being earned rather than asserted:
+
+```ts
+const Email = brand("email", (value: string) => value.includes("@"));
+
+Email("user@example.com"); // Branded<string, "email">
+Email("nope"); //            throws InvalidBrand
+
+if (Email.is(input)) sendWelcome(input); // input: Branded<string, "email">
+```
+
+`safe()` is the same check as a `Result`, so validation joins the chain instead of interrupting it:
+
+```ts
+Email.safe(req.body.email) // Result<Branded<string, "email">, InvalidBrand>
+  .mapValue((email) => sendWelcome(email))
+  .handleError(InvalidBrand, (e) => Result.ok(reject(e.value)));
+```
+
+`InvalidBrand` is both a real `Error` and a tagged one, so it works in a `catch` and in `handleError` alike. It carries `brandName` and the `value` that was refused.
+
+> **Without a predicate there is no checker.** `brand(name)` gives you a constructor and nothing else — no `is`, no `safe`. A guard with no predicate behind it could only ever answer "yes", which is worse than not having one.
+
+Nothing is added to the value at runtime: an unchecked brand is the identity function, and a checked one only runs your predicate.
 
 ---
 
@@ -346,7 +451,7 @@ const parseWebhookEvent = Result.registerExecution((raw: unknown) => {
 // (raw: unknown) => Result<StripeEvent, MalformedWebhook>
 ```
 
-> **It does not catch exceptions.** A `throw` inside the body still propagates, and an async body still rejects. That is deliberate: a throw is a bug, an error is an outcome. Use `[Result.try](#bridging-code-that-throws)` when you want to convert one into the other.
+> **It does not catch exceptions.** A `throw` inside the body still propagates, and an async body still rejects. That is deliberate: a throw is a bug, an error is an outcome. Use [`Result.try`](#try--run-it-now) when you want to convert one into the other — which is exactly what you do at the edge of an SDK that throws — or [`Result.fromThrowable`](#fromthrowable--convert-once-call-anywhere) to lift that SDK call once and stop thinking about it.
 
 ---
 
@@ -901,13 +1006,35 @@ The chaining methods and terminals below exist on an asynchronous chain too, und
 | `value` / `error`                  | `T                                                                    | undefined`/`E | undefined` |
 | `mapValue(fn)`                     | Transform the value; failures pass through. Errors accumulate.        |
 | `mapError(fn)`                     | Transform the error; successes pass through. Errors are replaced.     |
-| `handleError(...classes, handler)` | Handle specific classes; subtracts them from the union.               |
+| `handleError(...classes, handler)` | Handle specific classes and every descendant; subtracts them from the union. |
 | `tap(fn)` / `tapError(fn)`         | Side effect; returns the chain unchanged. An async effect is awaited. |
 | `match({ ok, err })`               | Collapse both branches into one value.                                |
 | `unwrap()` / `unwrapError()`       | Extract, or throw `ResultUnwrapError`.                                |
 | `unwrapOr(d)` / `unwrapOrElse(fn)` | Extract with a fallback.                                              |
 | `toAsync()`                        | Lift a synchronous result into an asynchronous chain. `Result` only.  |
 | `getResult()`                      | Resolve an asynchronous chain to a plain `Result`. Chain only.        |
+
+### Error base classes
+
+| Signature                | Description                                                                                                          |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| `Tagged(tag)`            | Abstract base stamping a literal `_tag`. Each call returns a distinct class.                                          |
+| `Tagged(tag, Parent)`    | The same, as a member of `Parent`'s family: `_tag` becomes `"Parent.tag"` and `handleError(Parent)` handles it.       |
+| `TaggedError(tag)`       | The same as `Tagged(tag)`, but instances are real `Error`s with `message`, `stack` and `name === tag`.                |
+| `TaggedError(tag, Parent)` | A member of an `Error` family; `name` follows the composed path. `Parent` must already be an `Error` family.        |
+| `ResultUnwrapError`      | Thrown by `unwrap()` / `unwrapError()`. Carries the original error on `.taggedError`.                                 |
+
+### Branding values
+
+| Signature                | Description                                                                                                          |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| `Branded<T, Name>`       | The base type `T` with a compile-time-only label. A raw `T` is not assignable to it; it is assignable to `T`.          |
+| `brand(name)`            | A constructor for `Branded<string, name>`. Identity at runtime. Base type via `brand<"tag", T>(name)`.                 |
+| `brand(name, is)`        | The same, checked: the constructor throws `InvalidBrand`, plus `is()` and `safe()`. Base type inferred from `is`.       |
+| `BrandOf<typeof X>`      | The type a `brand()` factory produces, so the name is written once.                                                   |
+| `InvalidBrand`           | Tagged `Error` a checked brand reports. Carries `brandName` and the refused `value`.                                  |
+
+A tag may not contain `.` — the factory composes the path, and a hand-written dot would claim a lineage `instanceof` does not back.
 
 ---
 

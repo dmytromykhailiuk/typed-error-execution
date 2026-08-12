@@ -1,6 +1,6 @@
 {
   "name": "@dmytromykhailiuk/typed-error-execution",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "description": "Typed, tagged errors for TypeScript. A Result type that tracks every failure a call can produce in its signature — inspired by Effect and neverthrow, but small and boring on purpose.",
   "type": "module",
   "sideEffects": false,

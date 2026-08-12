@@ -7,12 +7,16 @@
  * still produce, and `handleError()` removes them from that union one by one
  * until nothing is left.
  *
- * The public surface is deliberately four names. Everything else — the
- * asynchronous half of a chain, the type helpers, the runtime guards — is
- * reached through `Result` itself or inferred for you.
+ * The public surface stays deliberately small: `Result`, the two error base
+ * classes, and `brand` for labelling values that are the same underneath but
+ * must not be interchangeable. Everything else — the asynchronous half of a
+ * chain, the type helpers, the runtime guards — is reached through `Result`
+ * itself or inferred for you.
  *
  * @packageDocumentation
  */
 
+export { brand, InvalidBrand } from "./branded";
 export { Result, ResultUnwrapError } from "./result";
 export { Tagged, TaggedError } from "./tagged";
+export type { Brand, Branded, BrandOf, CheckedBrand } from "./types";
