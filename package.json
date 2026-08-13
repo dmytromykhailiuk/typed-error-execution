@@ -1,7 +1,7 @@
 {
   "name": "@dmytromykhailiuk/typed-error-execution",
-  "version": "2.0.0",
-  "description": "Typed, tagged errors for TypeScript. A Result type that tracks every failure a call can produce in its signature — inspired by Effect and neverthrow, but small and boring on purpose.",
+  "version": "2.0.1",
+  "description": "Typed, tagged errors for TypeScript. A Result type that tracks every failure a call can produce in its signature and subtracts each one as you handle it, plus branded types for values that must not be interchangeable — inspired by Effect and neverthrow, but small and boring on purpose.",
   "type": "module",
   "sideEffects": false,
   "author": "Dmytro Mykhailiuk <dimamykhayluk@gmail.com>",
@@ -9,19 +9,43 @@
   "keywords": [
     "result",
     "result-type",
+    "result-pattern",
     "either",
+    "error-handling",
+    "errors-as-values",
+    "error-as-value",
     "typed-errors",
+    "type-safe-errors",
     "tagged-error",
     "tagged-union",
-    "error-handling",
+    "discriminated-union",
+    "exhaustiveness",
+    "no-throw",
+    "try-catch",
     "railway-oriented",
+    "railway",
     "functional",
+    "functional-programming",
+    "fp",
+    "monad",
+    "branded-types",
+    "branded",
+    "brand",
+    "nominal-typing",
+    "opaque-types",
     "neverthrow",
     "effect",
-    "no-throw",
+    "effect-ts",
+    "ts-results",
     "typescript",
+    "ts",
     "typed",
+    "type-safe",
     "async",
+    "promise",
+    "esm",
+    "cjs",
+    "tree-shakeable",
     "zero-dependencies"
   ],
   "files": [
@@ -78,5 +102,5 @@
   "bugs": {
     "url": "https://github.com/dmytromykhailiuk/typed-error-execution/issues"
   },
-  "homepage": "https://github.com/dmytromykhailiuk/typed-error-execution#readme"
+  "homepage": "https://dmytromykhailiuk.github.io/typed-error-execution/"
 }

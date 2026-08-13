@@ -6,7 +6,7 @@
 
 A `Result<T, E>` either succeeded with a `T` or failed with one of the tagged errors in `E`. Errors are ordinary classes carrying a literal `_tag`, so TypeScript tracks exactly which failures a call can still produce — and `handleError()` removes them from that union one at a time until nothing is left.
 
-Inspired by [Effect](https://effect.website/) and [neverthrow](https://github.com/supermacro/neverthrow), but deliberately small: **a handful of exports**, one API for sync and async, no generators, no runtime, no fibers. Zero dependencies.
+Inspired by [Effect](https://effect.website/) and [neverthrow](https://github.com/supermacro/neverthrow), but deliberately small: **six runtime exports**, one API for sync and async, no generators, no runtime, no fibers. Zero dependencies.
 
 ```ts
 import {
@@ -101,6 +101,8 @@ import {
   InvalidBrand, // what a checked brand reports
   type Branded, // the same label, as a type
   type BrandOf, // the type a brand() factory produces
+  type Brand, // the shape of a brand() factory itself
+  type CheckedBrand, // the same, with is() and safe() on it
 } from "@dmytromykhailiuk/typed-error-execution";
 ```
 
@@ -1032,6 +1034,8 @@ The chaining methods and terminals below exist on an asynchronous chain too, und
 | `brand(name)`            | A constructor for `Branded<string, name>`. Identity at runtime. Base type via `brand<"tag", T>(name)`.                 |
 | `brand(name, is)`        | The same, checked: the constructor throws `InvalidBrand`, plus `is()` and `safe()`. Base type inferred from `is`.       |
 | `BrandOf<typeof X>`      | The type a `brand()` factory produces, so the name is written once.                                                   |
+| `Brand<T, Name>`         | The shape of an unchecked factory: callable, plus `brandName`. Use it to type one you are passed.                     |
+| `CheckedBrand<T, Name>`  | The same with the predicate behind it: adds `is()` and `safe()`.                                                      |
 | `InvalidBrand`           | Tagged `Error` a checked brand reports. Carries `brandName` and the refused `value`.                                  |
 
 A tag may not contain `.` — the factory composes the path, and a hand-written dot would claim a lineage `instanceof` does not back.
@@ -1049,8 +1053,8 @@ A tag may not contain `.` — the factory composes the path, and a hand-written 
 | Generator syntax                 | no                   | no                  | yes                  |
 | Dependency injection             | no                   | no                  | yes                  |
 | Concurrency, retries, scheduling | no                   | no                  | yes                  |
-| Bundle size                      | **1.2 KB** min+gz    | comparable          | substantially larger |
-| Names to import                  | **4**                | a dozen or so       | many                 |
+| Bundle size                      | **1.4 KB** min+gz    | comparable          | substantially larger |
+| Names to import                  | **6**, plus 4 types  | a dozen or so       | many                 |
 
 Pick Effect when you want the whole platform. Pick this when you want typed errors and nothing else in the way.
 
